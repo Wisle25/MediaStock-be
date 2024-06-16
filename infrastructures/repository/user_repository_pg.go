@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/wisle25/be-template/applications/generator"
-	"github.com/wisle25/be-template/domains/entity"
-	"github.com/wisle25/be-template/domains/repository"
+	"github.com/wisle25/media-stock-be/applications/generator"
+	"github.com/wisle25/media-stock-be/domains/entity"
+	"github.com/wisle25/media-stock-be/domains/repository"
 	"strings"
 )
 
@@ -129,4 +129,19 @@ func (r *UserRepositoryPG) UpdateUserById(id string, payload *entity.UpdateUserP
 	}
 
 	return oldAvatarLink
+}
+
+func (r *UserRepositoryPG) ActivateAccount(id string) {
+	// Query
+	query := `UPDATE users SET is_verified = TRUE WHERE id = $1`
+	result, err := r.db.Exec(query, id)
+
+	// Evaluate
+	if err != nil {
+		panic(fmt.Errorf("user_repo_pg_error: update user: %v", err))
+	}
+
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		panic(fiber.NewError(fiber.StatusNotFound, "Unable to activate user!"))
+	}
 }

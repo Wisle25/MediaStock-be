@@ -2,7 +2,7 @@
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/wisle25/be-template/applications/use_case"
+	"github.com/wisle25/media-stock-be/applications/use_case"
 )
 
 // JwtMiddleware gonna verifying user credential for authentication/authorization reason

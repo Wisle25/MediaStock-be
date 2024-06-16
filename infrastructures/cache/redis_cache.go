@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"github.com/wisle25/be-template/applications/cache"
+	"github.com/wisle25/media-stock-be/applications/cache"
 	"time"
 )
 

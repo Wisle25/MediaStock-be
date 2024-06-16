@@ -1,13 +1,15 @@
 package use_case
 
 import (
-	"github.com/wisle25/be-template/applications/cache"
-	"github.com/wisle25/be-template/applications/file_statics"
-	"github.com/wisle25/be-template/applications/security"
-	"github.com/wisle25/be-template/applications/validation"
-	"github.com/wisle25/be-template/commons"
-	"github.com/wisle25/be-template/domains/entity"
-	"github.com/wisle25/be-template/domains/repository"
+	"fmt"
+	"github.com/wisle25/media-stock-be/applications/cache"
+	"github.com/wisle25/media-stock-be/applications/emails"
+	"github.com/wisle25/media-stock-be/applications/file_statics"
+	"github.com/wisle25/media-stock-be/applications/security"
+	"github.com/wisle25/media-stock-be/applications/validation"
+	"github.com/wisle25/media-stock-be/commons"
+	"github.com/wisle25/media-stock-be/domains/entity"
+	"github.com/wisle25/media-stock-be/domains/repository"
 	"io"
 	"time"
 )
@@ -18,6 +20,7 @@ type UserUseCase struct {
 	fileProcessing file_statics.FileProcessing
 	fileUpload     file_statics.FileUpload
 	passwordHash   security.PasswordHash
+	emailService   emails.EmailService
 	validator      validation.ValidateUser
 	config         *commons.Config
 	token          security.Token
@@ -29,6 +32,7 @@ func NewUserUseCase(
 	fileProcessing file_statics.FileProcessing,
 	fileUpload file_statics.FileUpload,
 	passwordHash security.PasswordHash,
+	emailService emails.EmailService,
 	validator validation.ValidateUser,
 	config *commons.Config,
 	token security.Token,
@@ -39,6 +43,7 @@ func NewUserUseCase(
 		fileProcessing: fileProcessing,
 		fileUpload:     fileUpload,
 		passwordHash:   passwordHash,
+		emailService:   emailService,
 		validator:      validator,
 		config:         config,
 		token:          token,
@@ -54,7 +59,46 @@ func (uc *UserUseCase) ExecuteAdd(payload *entity.RegisterUserPayload) string {
 
 	payload.Password = uc.passwordHash.Hash(payload.Password)
 
-	return uc.userRepository.AddUser(payload)
+	registeredId := uc.userRepository.AddUser(payload)
+
+	go uc.SendEmailActivation(payload, registeredId)
+
+	return registeredId
+}
+
+// SendEmailActivation sending email activation to user
+func (uc *UserUseCase) SendEmailActivation(payload *entity.RegisterUserPayload, registeredId string) {
+	activationToken := uc.token.CreateToken(
+		registeredId,
+		uc.config.AccessTokenExpiresIn,
+		uc.config.AccessTokenPrivateKey,
+	)
+	activationURL := fmt.Sprintf(
+		"%s://%s:%s/activate?token=%s",
+		uc.config.ServerProtocol,
+		uc.config.ServerHost,
+		uc.config.ServerPort,
+		activationToken.Token,
+	)
+	activationEmail := entity.Email{
+		To:      payload.Email,
+		Subject: "Account Activation",
+		Body: fmt.Sprintf(`
+			<h2>Welcome %s!</h2>
+			<p>Thank you for registering. Please click the button below to activate your account:</p>
+			<a href="%s" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Activate Here</a>
+			<p>If the button above does not work, copy and paste the following link into your browser:</p>
+			<p><a href="%s">%s</a></p>
+		`, payload.Username, activationURL, activationURL, activationURL),
+	}
+	uc.emailService.SendEmail(activationEmail)
+}
+
+// ExecuteActivate Activating user from email (email verification)
+// Receiving payload token, so it can get user id when validating it
+func (uc *UserUseCase) ExecuteActivate(payloadToken string) {
+	tokenDetail := uc.token.ValidateToken(payloadToken, uc.config.AccessTokenPublicKey)
+	uc.userRepository.ActivateAccount(tokenDetail.UserId)
 }
 
 // ExecuteLogin Handling user login. Returning user's token for authentication/authorization later.

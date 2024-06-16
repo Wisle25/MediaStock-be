@@ -2,9 +2,9 @@ package validation
 
 import (
 	"fmt"
-	"github.com/wisle25/be-template/applications/validation"
-	"github.com/wisle25/be-template/domains/entity"
-	"github.com/wisle25/be-template/infrastructures/services"
+	"github.com/wisle25/media-stock-be/applications/validation"
+	"github.com/wisle25/media-stock-be/domains/entity"
+	"github.com/wisle25/media-stock-be/infrastructures/services"
 )
 
 type ValidateUser struct /* implements ValidateUser */ {

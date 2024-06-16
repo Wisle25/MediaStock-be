@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/wisle25/be-template/applications/generator"
-	"github.com/wisle25/be-template/applications/security"
-	"github.com/wisle25/be-template/domains/entity"
+	"github.com/wisle25/media-stock-be/applications/generator"
+	"github.com/wisle25/media-stock-be/applications/security"
+	"github.com/wisle25/media-stock-be/domains/entity"
 	"time"
 )
 

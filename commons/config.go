@@ -23,9 +23,11 @@ type Config struct {
 	RedisPassword string `mapstructure:"REDIS_PASSWORD"`
 
 	// Server configuration
-	AppEnv       string `mapstructure:"APP_ENV"`
-	ServerPort   string `mapstructure:"PORT"`
-	ClientOrigin string `mapstructure:"CLIENT_ORIGIN"`
+	AppEnv         string `mapstructure:"APP_ENV"`
+	ServerProtocol string `mapstructure:"PROTOCOL"`
+	ServerHost     string `mapstructure:"HOSt"`
+	ServerPort     string `mapstructure:"PORT"`
+	ClientOrigin   string `mapstructure:"CLIENT_ORIGIN"`
 
 	// JWT Tokens configuration
 	AccessTokenPrivateKey string        `mapstructure:"ACCESS_TOKEN_PRIVATE_KEY"`
@@ -44,6 +46,12 @@ type Config struct {
 	MinioSecretKey string `mapstructure:"MINIO_SECRET_KEY"`
 	MinioBucket    string `mapstructure:"MINIO_BUCKET"`
 	MinioLocation  string `mapstructure:"MINIO_LOCATION"`
+
+	// SMTP
+	SmtpHost     string `mapstructure:"SMTP_HOST"`
+	SmtpPort     string `mapstructure:"SMTP_PORT"`
+	SmtpUsername string `mapstructure:"SMTP_USERNAME"`
+	SmtpPassword string `mapstructure:"SMTP_PASSWORD"`
 }
 
 // LoadConfig loads configuration from the specified path.

@@ -3,8 +3,8 @@
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/wisle25/be-template/applications/use_case"
-	"github.com/wisle25/be-template/domains/entity"
+	"github.com/wisle25/media-stock-be/applications/use_case"
+	"github.com/wisle25/media-stock-be/domains/entity"
 	"time"
 )
 
@@ -30,6 +30,20 @@ func (h *UserHandler) AddUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status": "success",
 		"data":   returnedId,
+	})
+}
+
+func (h *UserHandler) ActivateAccount(c *fiber.Ctx) error {
+	// Payload
+	payloadToken := c.Query("token")
+
+	// Use Case
+	h.useCase.ExecuteActivate(payloadToken)
+
+	// Response
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
+		"message": "Successfully activate account!",
 	})
 }
 

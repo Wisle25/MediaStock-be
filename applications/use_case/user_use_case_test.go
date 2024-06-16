@@ -1,17 +1,18 @@
 package use_case_test
 
 import (
-	"github.com/wisle25/be-template/applications/file_statics"
-	"github.com/wisle25/be-template/applications/use_case"
-	"github.com/wisle25/be-template/domains/entity"
+	"github.com/wisle25/media-stock-be/applications/file_statics"
+	"github.com/wisle25/media-stock-be/applications/use_case"
+	"github.com/wisle25/media-stock-be/domains/entity"
 	"io"
 	"mime/multipart"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/wisle25/be-template/commons"
+	"github.com/wisle25/media-stock-be/commons"
 )
 
 // Mocks for the dependencies
@@ -41,6 +42,10 @@ func (m *MockUserRepository) UpdateUserById(id string, payload *entity.UpdateUse
 	args := m.Called(id, payload, avatarLink)
 
 	return args.String(0)
+}
+
+func (m *MockUserRepository) ActivateAccount(id string) {
+	m.Called(id)
 }
 
 type MockPasswordHash struct {
@@ -132,6 +137,19 @@ func (m *MockFileProcessing) ResizeImage(fileHeader *multipart.FileHeader) {
 	panic("implement me")
 }
 
+type MockEmailService struct {
+	mock.Mock
+	mu sync.Mutex
+	wg sync.WaitGroup
+}
+
+func (m *MockEmailService) SendEmail(payload entity.Email) {
+	defer m.wg.Done()
+	m.mu.Lock()
+	m.Called(payload)
+	m.mu.Unlock()
+}
+
 func TestUserUseCase(t *testing.T) {
 	mockUserRepo := new(MockUserRepository)
 	mockPasswordHash := new(MockPasswordHash)
@@ -146,12 +164,14 @@ func TestUserUseCase(t *testing.T) {
 	mockCache := new(MockCache)
 	mockFileUpload := new(MockFileUpload)
 	mockFileProcessing := new(MockFileProcessing)
+	mockEmailService := new(MockEmailService)
 
 	userUseCase := use_case.NewUserUseCase(
 		mockUserRepo,
 		mockFileProcessing,
 		mockFileUpload,
 		mockPasswordHash,
+		mockEmailService,
 		mockValidator,
 		mockConfig,
 		mockToken,
@@ -169,9 +189,13 @@ func TestUserUseCase(t *testing.T) {
 		mockValidator.On("ValidateRegisterPayload", payload).Return(nil)
 		mockPasswordHash.On("Hash", payload.Password).Return("hashedpassword")
 		mockUserRepo.On("AddUser", payload).Return("userid123")
+		mockToken.On("CreateToken", "userid123", mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(&entity.TokenDetail{}).Once()
+		mockEmailService.On("SendEmail", mock.AnythingOfType("entity.Email")).Return(nil)
 
 		// Action
+		mockEmailService.wg.Add(1)
 		userId := userUseCase.ExecuteAdd(payload)
+		mockEmailService.wg.Wait()
 
 		// Assert
 		assert.Equal(t, "userid123", userId)
@@ -179,6 +203,27 @@ func TestUserUseCase(t *testing.T) {
 		mockValidator.AssertExpectations(t)
 		mockUserRepo.AssertExpectations(t)
 		mockPasswordHash.AssertExpectations(t)
+		mockEmailService.AssertExpectations(t)
+	})
+
+	t.Run("Execute Activate", func(t *testing.T) {
+		// Arrange
+		payloadToken := "token123"
+		userId := "userid123"
+
+		expectedToken := &entity.TokenDetail{
+			UserId: userId,
+		}
+
+		mockToken.On("ValidateToken", payloadToken, mockConfig.AccessTokenPublicKey).Return(expectedToken)
+		mockUserRepo.On("ActivateAccount", expectedToken.UserId).Return(nil)
+
+		// Actions
+		userUseCase.ExecuteActivate(payloadToken)
+
+		// Assert
+		mockToken.AssertExpectations(t)
+		mockUserRepo.AssertExpectations(t)
 	})
 
 	t.Run("Execute Login", func(t *testing.T) {
@@ -211,10 +256,10 @@ func TestUserUseCase(t *testing.T) {
 		mockValidator.On("ValidateLoginPayload", payload).Return(nil)
 		mockUserRepo.On("GetUserForLogin", payload.Identity).Return(user.Id, "hashedpassword")
 		mockPasswordHash.On("Compare", payload.Password, "hashedpassword").Return(nil)
-		mockToken.On("CreateToken", user.Id, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(accessTokenDetail)
-		mockToken.On("CreateToken", user.Id, mockConfig.RefreshTokenExpiresIn, mockConfig.RefreshTokenPrivateKey).Return(refreshTokenDetail)
-		mockCache.On("SetCache", accessTokenDetail.TokenId, user.Id, mock.Anything).Return(nil)
-		mockCache.On("SetCache", refreshTokenDetail.TokenId, user.Id, mock.Anything).Return(nil)
+		mockToken.On("CreateToken", user.Id, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(accessTokenDetail).Once()
+		mockToken.On("CreateToken", user.Id, mockConfig.RefreshTokenExpiresIn, mockConfig.RefreshTokenPrivateKey).Return(refreshTokenDetail).Once()
+		mockCache.On("SetCache", accessTokenDetail.TokenId, user.Id, mock.Anything).Return(nil).Once()
+		mockCache.On("SetCache", refreshTokenDetail.TokenId, user.Id, mock.Anything).Return(nil).Once()
 
 		// Action
 		accessToken, refreshToken := userUseCase.ExecuteLogin(payload)

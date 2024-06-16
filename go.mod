@@ -1,4 +1,4 @@
-module github.com/wisle25/be-template
+module github.com/wisle25/media-stock-be
 
 go 1.22.2
 

@@ -2,7 +2,7 @@
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/wisle25/be-template/commons"
+	"github.com/wisle25/media-stock-be/commons"
 	"testing"
 )
 

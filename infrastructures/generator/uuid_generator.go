@@ -3,7 +3,7 @@
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/wisle25/be-template/applications/generator"
+	"github.com/wisle25/media-stock-be/applications/generator"
 )
 
 // UUIDGenerator implements IdGenerator using UUID

@@ -2,11 +2,11 @@ package validation_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/wisle25/be-template/domains/entity"
-	"github.com/wisle25/be-template/infrastructures/services"
+	"github.com/wisle25/media-stock-be/domains/entity"
+	"github.com/wisle25/media-stock-be/infrastructures/services"
 	"testing"
 
-	"github.com/wisle25/be-template/infrastructures/validation"
+	"github.com/wisle25/media-stock-be/infrastructures/validation"
 )
 
 func TestValidateUser(t *testing.T) {

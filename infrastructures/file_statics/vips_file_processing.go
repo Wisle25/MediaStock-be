@@ -3,7 +3,7 @@
 import (
 	"fmt"
 	"github.com/davidbyttow/govips/v2/vips"
-	"github.com/wisle25/be-template/applications/file_statics"
+	"github.com/wisle25/media-stock-be/applications/file_statics"
 	"mime/multipart"
 )
 

@@ -1,7 +1,7 @@
 ﻿package security
 
 import (
-	"github.com/wisle25/be-template/domains/entity"
+	"github.com/wisle25/media-stock-be/domains/entity"
 	"time"
 )
 

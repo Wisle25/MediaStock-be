@@ -6,14 +6,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/wisle25/be-template/commons"
-	"github.com/wisle25/be-template/infrastructures/cache"
-	"github.com/wisle25/be-template/infrastructures/container"
-	"github.com/wisle25/be-template/infrastructures/file_statics"
-	"github.com/wisle25/be-template/infrastructures/generator"
-	"github.com/wisle25/be-template/infrastructures/services"
-	"github.com/wisle25/be-template/interfaces/http/middlewares"
-	"github.com/wisle25/be-template/interfaces/http/users"
+	"github.com/wisle25/media-stock-be/commons"
+	"github.com/wisle25/media-stock-be/infrastructures/cache"
+	"github.com/wisle25/media-stock-be/infrastructures/container"
+	"github.com/wisle25/media-stock-be/infrastructures/emails"
+	"github.com/wisle25/media-stock-be/infrastructures/file_statics"
+	"github.com/wisle25/media-stock-be/infrastructures/generator"
+	"github.com/wisle25/media-stock-be/infrastructures/services"
+	"github.com/wisle25/media-stock-be/interfaces/http/middlewares"
+	"github.com/wisle25/media-stock-be/interfaces/http/users"
 )
 
 func errorHandling(c *fiber.Ctx, err error) error {
@@ -64,6 +65,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 	validation := services.NewValidation()
 	minioFileUpload := file_statics.NewMinioFileUpload(minio, uuidGenerator, bucketName)
 	vipsFileProcessing := file_statics.NewVipsFileProcessing()
+	emailService := emails.NewStmpEmailService(config)
 
 	// Use Cases
 	userUseCase := container.NewUserContainer(
@@ -73,6 +75,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 		uuidGenerator,
 		vipsFileProcessing,
 		minioFileUpload,
+		emailService,
 		validation,
 	)
 

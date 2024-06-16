@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/wisle25/be-template/domains/entity"
+import "github.com/wisle25/media-stock-be/domains/entity"
 
 // UserRepository defines methods for interacting with the user-related data in the database.
 type UserRepository interface {
@@ -22,4 +22,7 @@ type UserRepository interface {
 	// It should raise panic if user is not existed
 	// Returns old avatar link (Link is used to delete the old one)
 	UpdateUserById(id string, payload *entity.UpdateUserPayload, newAvatarLink string) string
+
+	// ActivateAccount Modify user's data by set the is_verify to true
+	ActivateAccount(id string)
 }

@@ -33,8 +33,9 @@ func NewUserContainer(config *commons.Config, db *sql.DB, cache2 cache.Cache, id
 }
 
 // Dependency Injection for Asset Use Case
-func NewAssetContainer(idGenerator generator.IdGenerator, db *sql.DB, fileProcessing file_statics.FileProcessing, fileUpload file_statics.FileUpload) *use_case.AssetUseCase {
+func NewAssetContainer(idGenerator generator.IdGenerator, db *sql.DB, fileProcessing file_statics.FileProcessing, fileUpload file_statics.FileUpload, validator *services.Validation) *use_case.AssetUseCase {
 	assetRepository := repository.NewAssetRepositoryPG(idGenerator, db)
-	assetUseCase := use_case.NewAssetUseCase(assetRepository, fileProcessing, fileUpload)
+	validateAsset := validation.NewGoValidateAsset(validator)
+	assetUseCase := use_case.NewAssetUseCase(assetRepository, fileProcessing, fileUpload, validateAsset)
 	return assetUseCase
 }

@@ -2,10 +2,13 @@
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"github.com/wisle25/media-stock-be/applications/generator"
 	"github.com/wisle25/media-stock-be/domains/entity"
 	"github.com/wisle25/media-stock-be/domains/repository"
+	"github.com/wisle25/media-stock-be/infrastructures/services"
 )
 
 type AssetRepositoryPG struct {
@@ -46,6 +49,143 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AddAssetPayload) string {
 	if err != nil {
 		panic(fmt.Errorf("add_asset_err: %v", err))
 	}
-	
+
 	return returnedId
+}
+
+func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int) []entity.PreviewAsset {
+	// Pagination
+	offset := (pageList - 1) * listCount
+
+	// Query
+	query := `
+			SELECT 
+    			id, owner_id, title, file_watermark_path, description 
+			FROM assets
+			ORDER BY created_at DESC
+			LIMIT $1 OFFSET $2`
+	rows, err := r.db.Query(query, listCount, offset)
+
+	// Evaluate
+	if err != nil {
+		panic(fmt.Errorf("get_preview_assets_err: %v", err))
+	}
+
+	return services.GetTableDB[entity.PreviewAsset](rows)
+}
+
+func (r *AssetRepositoryPG) GetDetailAsset(id string) *entity.Asset {
+	var result entity.Asset
+
+	// Query
+	query := `
+			SELECT
+				id, owner_id, title, file_watermark_path, description, details, created_at, updated_at FROM assets 
+			WHERE id = $1`
+	err := r.db.QueryRow(query, id).Scan(
+		&result.Id,
+		&result.OwnerId,
+		&result.Title,
+		&result.FilePath,
+		&result.Description,
+		&result.Details,
+		&result.CreatedAt,
+		&result.UpdatedAt,
+	)
+
+	// Evaluate
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			panic(fiber.NewError(fiber.StatusNotFound, "Asset is not existed!"))
+		}
+
+		panic(fmt.Errorf("get_detail_asset_err: %v", err))
+	}
+
+	return &result
+}
+
+func (r *AssetRepositoryPG) UpdateAsset(id string, payload *entity.AddAssetPayload) (string, string) {
+	var oldOriginalLink string
+	var oldWatermarkLink string
+
+	// Query
+	query := `
+			WITH old_data AS (
+				SELECT file_path, file_watermark_path
+				FROM assets
+				WHERE id = $1
+			)
+			UPDATE assets
+			SET 
+				title = $2,
+				file_path = $3,
+			    file_watermark_path = $4,
+				description = $5, 
+				details = $6,
+				updated_at = NOW()
+			FROM old_data
+			WHERE id = $1
+			RETURNING old_data.file_path, old_data.file_watermark_path`
+	err := r.db.QueryRow(
+		query,
+		id,
+		payload.Title,
+		payload.OriginalLink,
+		payload.WatermarkLink,
+		payload.Description,
+		payload.Details,
+	).Scan(&oldOriginalLink, &oldWatermarkLink)
+
+	// Evaluate
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			panic(fiber.NewError(fiber.StatusNotFound, "Asset is not existed!"))
+		}
+
+		panic(fmt.Errorf("update_asset_err: %v", err))
+	}
+
+	return oldOriginalLink, oldWatermarkLink
+}
+
+func (r *AssetRepositoryPG) DeleteAsset(id string) (string, string) {
+	var oldOriginalLink string
+	var oldWatermarkLink string
+
+	// Query
+	query := `DELETE FROM assets WHERE id = $1 RETURNING file_path, file_watermark_path`
+	err := r.db.QueryRow(query, id).Scan(&oldOriginalLink, &oldWatermarkLink)
+
+	// Evaluate
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			panic(fiber.NewError(fiber.StatusNotFound, "Asset is not existed!"))
+		}
+
+		panic(fmt.Errorf("delete_asset_err: %v", err))
+	}
+
+	return oldOriginalLink, oldWatermarkLink
+}
+
+func (r *AssetRepositoryPG) VerifyOwner(userId string, id string) {
+	var ownerId string
+
+	// Query
+	query := "SELECT owner_id FROM assets WHERE id = $1"
+	err := r.db.QueryRow(query, id).Scan(&ownerId)
+
+	// Evaluate
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			panic(fiber.NewError(fiber.StatusNotFound, "Asset is not existed!"))
+		}
+
+		panic(fmt.Errorf("verify_owner_err: %v", err))
+	}
+
+	if userId != ownerId {
+		panic(fiber.NewError(fiber.StatusForbidden, "You don't have permission to do the action!"))
+	}
 }

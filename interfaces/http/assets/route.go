@@ -14,4 +14,8 @@ func NewAssetRouter(
 	assetHandler := NewAssetHandler(useCase)
 
 	app.Post("/assets", jwtMiddleware.GuardJWT, assetHandler.AddAsset)
+	app.Get("/assets", assetHandler.GetAll)
+	app.Get("/assets/:id", assetHandler.GetDetail)
+	app.Put("/assets/:id", jwtMiddleware.GuardJWT, assetHandler.Update)
+	app.Delete("/assets/:id", jwtMiddleware.GuardJWT, assetHandler.Delete)
 }

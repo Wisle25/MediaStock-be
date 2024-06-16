@@ -79,7 +79,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 		emailService,
 		validation,
 	)
-	assetUseCase := container.NewAssetContainer(uuidGenerator, db, vipsFileProcessing, minioFileUpload)
+	assetUseCase := container.NewAssetContainer(uuidGenerator, db, vipsFileProcessing, minioFileUpload, validation)
 
 	// Custom Middleware
 	jwtMiddleware := middlewares.NewJwtMiddleware(userUseCase)

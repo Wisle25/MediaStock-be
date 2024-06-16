@@ -20,4 +20,8 @@ type AssetRepository interface {
 	// DeleteAsset Deleting.
 	// Returning old both original and watermarked asset to be removed.
 	DeleteAsset(id string) (string, string)
+
+	// VerifyOwner verifying the owner
+	// Should raise panic if userId is not the owner
+	VerifyOwner(userId string, id string)
 }

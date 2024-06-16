@@ -46,8 +46,10 @@ func NewAssetContainer(
 	db *sql.DB,
 	fileProcessing file_statics.FileProcessing,
 	fileUpload file_statics.FileUpload,
+	validator *services.Validation,
 ) *use_case.AssetUseCase {
 	wire.Build(
+		validation.NewGoValidateAsset,
 		repository.NewAssetRepositoryPG,
 		use_case.NewAssetUseCase,
 	)

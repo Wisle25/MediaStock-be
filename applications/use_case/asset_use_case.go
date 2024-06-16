@@ -2,6 +2,7 @@
 
 import (
 	"github.com/wisle25/media-stock-be/applications/file_statics"
+	"github.com/wisle25/media-stock-be/applications/validation"
 	"github.com/wisle25/media-stock-be/domains/entity"
 	"github.com/wisle25/media-stock-be/domains/repository"
 	"io"
@@ -12,28 +13,32 @@ type AssetUseCase struct {
 	assetRepository repository.AssetRepository
 	fileProcessing  file_statics.FileProcessing
 	fileUpload      file_statics.FileUpload
+	validation      validation.ValidateAsset
 }
 
 func NewAssetUseCase(
 	assetRepository repository.AssetRepository,
 	processing file_statics.FileProcessing,
 	upload file_statics.FileUpload,
+	validation validation.ValidateAsset,
 ) *AssetUseCase {
 	return &AssetUseCase{
 		assetRepository,
 		processing,
 		upload,
+		validation,
 	}
 }
 
 func (uc *AssetUseCase) ExecuteAdd(payload *entity.AddAssetPayload) string {
+	//uc.validation.ValidatePayload(payload)
 	uc.handleFileAsset(payload)
 
 	// Finally add it to repository
 	return uc.assetRepository.AddAsset(payload)
 }
 
-func (uc *AssetUseCase) GetAll(listCount int, pageList int) []entity.PreviewAsset {
+func (uc *AssetUseCase) ExecuteGetAll(listCount int, pageList int) []entity.PreviewAsset {
 	return uc.assetRepository.GetPreviewAssets(listCount, pageList)
 }
 
@@ -42,6 +47,7 @@ func (uc *AssetUseCase) ExecuteGetDetail(id string) *entity.Asset {
 }
 
 func (uc *AssetUseCase) ExecuteUpdate(id string, payload *entity.AddAssetPayload) {
+	//uc.validation.ValidatePayload(payload)
 	uc.handleFileAsset(payload)
 	oldOriginalAsset, oldWatermarkedAsset := uc.assetRepository.UpdateAsset(id, payload)
 
@@ -57,6 +63,13 @@ func (uc *AssetUseCase) ExecuteDelete(id string) {
 	// Remove file asset from storage
 	uc.fileUpload.RemoveFile(originalAsset)
 	uc.fileUpload.RemoveFile(watermarkedAsset)
+}
+
+func (uc *AssetUseCase) VerifyAccess(userId string, id string) {
+	// LATER, Verify if he is admin later
+
+	// Verify Owner
+	uc.assetRepository.VerifyOwner(userId, id)
 }
 
 func (uc *AssetUseCase) handleFileAsset(payload *entity.AddAssetPayload) {

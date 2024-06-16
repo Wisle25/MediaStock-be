@@ -24,7 +24,6 @@ func TestUserRepository(t *testing.T) {
 	uuidGenerator := generator.NewUUIDGenerator()
 	userRepositoryPG := repository.NewUserRepositoryPG(db, uuidGenerator)
 
-	// Arrange
 	payload := &entity.RegisterUserPayload{
 		Username: "uname",
 		Password: "password",

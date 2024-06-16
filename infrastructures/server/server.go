@@ -13,6 +13,7 @@ import (
 	"github.com/wisle25/media-stock-be/infrastructures/file_statics"
 	"github.com/wisle25/media-stock-be/infrastructures/generator"
 	"github.com/wisle25/media-stock-be/infrastructures/services"
+	"github.com/wisle25/media-stock-be/interfaces/http/assets"
 	"github.com/wisle25/media-stock-be/interfaces/http/middlewares"
 	"github.com/wisle25/media-stock-be/interfaces/http/users"
 )
@@ -78,12 +79,14 @@ func CreateServer(config *commons.Config) *fiber.App {
 		emailService,
 		validation,
 	)
+	assetUseCase := container.NewAssetContainer(uuidGenerator, db, vipsFileProcessing, minioFileUpload)
 
 	// Custom Middleware
 	jwtMiddleware := middlewares.NewJwtMiddleware(userUseCase)
 
 	// Router
 	users.NewUserRouter(app, jwtMiddleware, userUseCase)
+	assets.NewAssetRouter(app, jwtMiddleware, assetUseCase)
 
 	return app
 }

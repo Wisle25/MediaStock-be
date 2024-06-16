@@ -137,6 +137,12 @@ func (m *MockFileProcessing) ResizeImage(fileHeader *multipart.FileHeader) {
 	panic("implement me")
 }
 
+func (m *MockFileProcessing) AddWatermark(buffer []byte) []byte {
+	args := m.Called(buffer)
+
+	return args.Get(0).([]byte)
+}
+
 type MockEmailService struct {
 	mock.Mock
 	mu sync.Mutex

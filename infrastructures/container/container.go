@@ -29,13 +29,27 @@ func NewUserContainer(
 	email emails.EmailService,
 	validator *services.Validation,
 ) *use_case.UserUseCase {
-	// Repository
 	wire.Build(
 		repository.NewUserRepositoryPG,
 		security.NewArgon2,
 		validation.NewValidateUser,
 		security.NewJwtToken,
 		use_case.NewUserUseCase,
+	)
+
+	return nil
+}
+
+// Dependency Injection for Asset Use Case
+func NewAssetContainer(
+	idGenerator generator.IdGenerator,
+	db *sql.DB,
+	fileProcessing file_statics.FileProcessing,
+	fileUpload file_statics.FileUpload,
+) *use_case.AssetUseCase {
+	wire.Build(
+		repository.NewAssetRepositoryPG,
+		use_case.NewAssetUseCase,
 	)
 
 	return nil

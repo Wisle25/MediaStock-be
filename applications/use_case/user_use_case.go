@@ -1,6 +1,7 @@
 package use_case
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/wisle25/media-stock-be/applications/cache"
 	"github.com/wisle25/media-stock-be/applications/emails"
@@ -69,7 +70,9 @@ func (uc *UserUseCase) ExecuteAdd(payload *entity.RegisterUserPayload) string {
 // SendEmailActivation sending email activation to user
 func (uc *UserUseCase) SendEmailActivation(payload *entity.RegisterUserPayload, registeredId string) {
 	activationToken := uc.token.CreateToken(
-		registeredId,
+		&entity.UserToken{
+			UserId: registeredId,
+		},
 		uc.config.AccessTokenExpiresIn,
 		uc.config.AccessTokenPrivateKey,
 	)
@@ -98,7 +101,7 @@ func (uc *UserUseCase) SendEmailActivation(payload *entity.RegisterUserPayload, 
 // Receiving payload token, so it can get user id when validating it
 func (uc *UserUseCase) ExecuteActivate(payloadToken string) {
 	tokenDetail := uc.token.ValidateToken(payloadToken, uc.config.AccessTokenPublicKey)
-	uc.userRepository.ActivateAccount(tokenDetail.UserId)
+	uc.userRepository.ActivateAccount(tokenDetail.UserToken.UserId)
 }
 
 // ExecuteLogin Handling user login. Returning user's token for authentication/authorization later.
@@ -108,17 +111,22 @@ func (uc *UserUseCase) ExecuteLogin(payload *entity.LoginUserPayload) (*entity.T
 	uc.validator.ValidateLoginPayload(payload)
 
 	// Get user information from database then compare password
-	userId, encryptedPassword := uc.userRepository.GetUserForLogin(payload.Identity)
+	userInfo, encryptedPassword := uc.userRepository.GetUserForLogin(payload.Identity)
 	uc.passwordHash.Compare(payload.Password, encryptedPassword)
 
 	// Create token
-	accessTokenDetail := uc.token.CreateToken(userId, uc.config.AccessTokenExpiresIn, uc.config.AccessTokenPrivateKey)
-	refreshTokenDetail := uc.token.CreateToken(userId, uc.config.RefreshTokenExpiresIn, uc.config.RefreshTokenPrivateKey)
+	accessTokenDetail := uc.token.CreateToken(userInfo, uc.config.AccessTokenExpiresIn, uc.config.AccessTokenPrivateKey)
+	refreshTokenDetail := uc.token.CreateToken(userInfo, uc.config.RefreshTokenExpiresIn, uc.config.RefreshTokenPrivateKey)
 
 	// Add tokens to the cache
+	userInfoJSON, err := json.Marshal(userInfo)
+	if err != nil {
+		panic(fmt.Errorf("login_err: unable to marshal json user info: %v", err))
+	}
+
 	now := time.Now()
-	uc.cache.SetCache(accessTokenDetail.TokenId, userId, time.Unix(accessTokenDetail.ExpiresIn, 0).Sub(now))
-	uc.cache.SetCache(refreshTokenDetail.TokenId, userId, time.Unix(refreshTokenDetail.ExpiresIn, 0).Sub(now))
+	uc.cache.SetCache(accessTokenDetail.TokenId, userInfoJSON, time.Unix(accessTokenDetail.ExpiresIn, 0).Sub(now))
+	uc.cache.SetCache(refreshTokenDetail.TokenId, userInfoJSON, time.Unix(refreshTokenDetail.ExpiresIn, 0).Sub(now))
 
 	// Returned token should be added to HTTP Cookie
 	return accessTokenDetail, refreshTokenDetail
@@ -130,12 +138,19 @@ func (uc *UserUseCase) ExecuteLogin(payload *entity.LoginUserPayload) (*entity.T
 func (uc *UserUseCase) ExecuteRefreshToken(currentRefreshToken string) *entity.TokenDetail {
 	// Verify token from JWT itself and from cache
 	tokenClaims := uc.token.ValidateToken(currentRefreshToken, uc.config.RefreshTokenPublicKey)
-	userId := uc.cache.GetCache(tokenClaims.TokenId).(string)
+	userInfoJSON := uc.cache.GetCache(tokenClaims.TokenId).(string)
+
+	// Unmarshal user info JSON
+	var userInfo entity.UserToken
+	err := json.Unmarshal([]byte(userInfoJSON), &userInfo)
+	if err != nil {
+		panic(fmt.Errorf("refresh_token_err: unable to unmarshal json user info: %v", err))
+	}
 
 	// Re-create access token and re-insert to the cache
 	now := time.Now()
-	accessTokenDetail := uc.token.CreateToken(userId, uc.config.AccessTokenExpiresIn, uc.config.AccessTokenPrivateKey)
-	uc.cache.SetCache(accessTokenDetail.TokenId, userId, time.Unix(accessTokenDetail.ExpiresIn, 0).Sub(now))
+	accessTokenDetail := uc.token.CreateToken(&userInfo, uc.config.AccessTokenExpiresIn, uc.config.AccessTokenPrivateKey)
+	uc.cache.SetCache(accessTokenDetail.TokenId, userInfoJSON, time.Unix(accessTokenDetail.ExpiresIn, 0).Sub(now))
 
 	// Returned token should be added to HTTP Cookie
 	return accessTokenDetail

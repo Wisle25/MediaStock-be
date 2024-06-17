@@ -77,16 +77,6 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		Domain:   "localhost",
 	})
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "logged_in",
-		Value:    "true",
-		Path:     "/",
-		MaxAge:   accessTokenDetail.MaxAge,
-		Secure:   false,
-		HTTPOnly: false,
-		Domain:   "localhost",
-	})
-
 	// Response
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":  "success",
@@ -136,11 +126,6 @@ func (h *UserHandler) Logout(c *fiber.Ctx) error {
 	})
 	c.Cookie(&fiber.Cookie{
 		Name:    "refresh_token",
-		Value:   "",
-		Expires: expiredTime,
-	})
-	c.Cookie(&fiber.Cookie{
-		Name:    "logged_in",
 		Value:   "",
 		Expires: expiredTime,
 	})

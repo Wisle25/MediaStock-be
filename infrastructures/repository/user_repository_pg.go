@@ -55,13 +55,18 @@ func (r *UserRepositoryPG) AddUser(payload *entity.RegisterUserPayload) string {
 	return returnedId
 }
 
-func (r *UserRepositoryPG) GetUserForLogin(identity string) (string, string) {
-	var userId string
+func (r *UserRepositoryPG) GetUserForLogin(identity string) (*entity.UserToken, string) {
+	var userToken entity.UserToken
 	var encryptedPassword string
 
 	// Query
-	query := "SELECT id, password FROM users WHERE email = $1 OR username = $1"
-	err := r.db.QueryRow(query, identity).Scan(&userId, &encryptedPassword)
+	query := "SELECT id, username, is_verified, password FROM users WHERE email = $1 OR username = $1"
+	err := r.db.QueryRow(query, identity).Scan(
+		&userToken.UserId,
+		&userToken.Username,
+		&userToken.IsVerified,
+		&encryptedPassword,
+	)
 
 	// Evaluate
 	if err != nil {
@@ -72,7 +77,7 @@ func (r *UserRepositoryPG) GetUserForLogin(identity string) (string, string) {
 		}
 	}
 
-	return userId, encryptedPassword
+	return &userToken, encryptedPassword
 }
 
 func (r *UserRepositoryPG) GetUserById(id string) *entity.User {

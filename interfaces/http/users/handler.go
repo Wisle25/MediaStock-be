@@ -151,12 +151,19 @@ func (h *UserHandler) GetUserById(c *fiber.Ctx) error {
 	})
 }
 
+func (h *UserHandler) GetLoggedUser(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "success",
+		"data":   c.Locals("userInfo").(entity.UserToken),
+	})
+}
+
 func (h *UserHandler) UpdateUserById(c *fiber.Ctx) error {
 	var err error
 
 	// Make sure to update self (not by others)
 	id := c.Params("id")
-	loggedUserId := c.Locals("user_id").(string)
+	loggedUserId := c.Locals("userInfo").(entity.UserToken).UserId
 
 	if loggedUserId != id {
 		return fiber.NewError(

@@ -60,9 +60,14 @@ func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int) []enti
 	// Query
 	query := `
 			SELECT 
-    			id, owner_id, title, file_watermark_path, description 
-			FROM assets
-			ORDER BY created_at DESC
+				a.id, 
+				u.username AS owner_username, 
+				a.title, 
+				a.file_watermark_path, 
+				a.description 
+			FROM assets a
+			INNER JOIN users u ON a.owner_id = u.id
+			ORDER BY a.created_at DESC
 			LIMIT $1 OFFSET $2`
 	rows, err := r.db.Query(query, listCount, offset)
 
@@ -74,19 +79,35 @@ func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int) []enti
 	return services.GetTableDB[entity.PreviewAsset](rows)
 }
 
-func (r *AssetRepositoryPG) GetDetailAsset(id string) *entity.Asset {
+func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Asset {
 	var result entity.Asset
+
+	var originalPath string
+	var watermarkPath string
 
 	// Query
 	query := `
 			SELECT
-				id, owner_id, title, file_watermark_path, description, details, created_at, updated_at FROM assets 
-			WHERE id = $1`
+				a.id,
+				u.id AS owner_id,
+				u.username AS owner_username, 
+				a.title, 
+				a.file_path,
+				a.file_watermark_path,
+				a.description, 
+				a.details, 
+				a.created_at, 
+				a.updated_at 
+			FROM assets a
+			INNER JOIN users u ON a.owner_id = u.id
+			WHERE a.id = $1`
 	err := r.db.QueryRow(query, id).Scan(
 		&result.Id,
 		&result.OwnerId,
+		&result.OwnerUsername,
 		&result.Title,
-		&result.FilePath,
+		&originalPath,
+		&watermarkPath,
 		&result.Description,
 		&result.Details,
 		&result.CreatedAt,
@@ -101,6 +122,14 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string) *entity.Asset {
 
 		panic(fmt.Errorf("get_detail_asset_err: %v", err))
 	}
+
+	// If user is the owner, return the original instead
+	if result.OwnerId == userId {
+		result.FilePath = originalPath
+	} else {
+		result.FilePath = watermarkPath
+	}
+	fmt.Printf("user: %s; asset: %s", userId, result.FilePath)
 
 	return &result
 }

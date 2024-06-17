@@ -41,7 +41,7 @@ func (m *JwtMiddleware) GuardJWT(c *fiber.Ctx) error {
 
 	// Add additional information
 	c.Locals("access_token_id", accessTokenDetail.TokenId)
-	c.Locals("user_id", userInfo.UserId)
+	c.Locals("userInfo", userInfo)
 
 	return c.Next()
 }

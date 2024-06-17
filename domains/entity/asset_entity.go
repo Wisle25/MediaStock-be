@@ -16,20 +16,21 @@ type AddAssetPayload struct {
 }
 
 type PreviewAsset struct {
-	Id          string `json:"id"`
-	OwnerId     string `json:"owner_id"`
-	Title       string `json:"title"`
-	FilePath    string `json:"file_watermark_path"`
-	Description string `json:"description"`
+	Id            string `json:"id"`
+	OwnerUsername string `json:"owner_username"`
+	Title         string `json:"title"`
+	FilePath      string `json:"file_watermark_path"`
+	Description   string `json:"description"`
 }
 
 type Asset struct {
-	Id          string
-	OwnerId     string
-	Title       string
-	FilePath    string
-	Description string
-	Details     string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Id            string    `json:"id"`
+	OwnerId       string    `json:"owner_id"`
+	OwnerUsername string    `json:"owner_username"`
+	Title         string    `json:"title"`
+	FilePath      string    `json:"file_watermark_path"`
+	Description   string    `json:"description"`
+	Details       string    `json:"details"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }

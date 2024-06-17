@@ -42,8 +42,8 @@ func (uc *AssetUseCase) ExecuteGetAll(listCount int, pageList int) []entity.Prev
 	return uc.assetRepository.GetPreviewAssets(listCount, pageList)
 }
 
-func (uc *AssetUseCase) ExecuteGetDetail(id string) *entity.Asset {
-	return uc.assetRepository.GetDetailAsset(id)
+func (uc *AssetUseCase) ExecuteGetDetail(id string, userId string) *entity.Asset {
+	return uc.assetRepository.GetDetailAsset(id, userId)
 }
 
 func (uc *AssetUseCase) ExecuteUpdate(id string, payload *entity.AddAssetPayload) {

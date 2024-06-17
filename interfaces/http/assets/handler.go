@@ -25,7 +25,7 @@ func (h *AssetHandler) AddAsset(c *fiber.Ctx) error {
 	var payload entity.AddAssetPayload
 	_ = c.BodyParser(&payload)
 
-	payload.OwnerId = c.Locals("user_id").(string)
+	payload.OwnerId = c.Locals("userInfo").(entity.UserToken).UserId
 	payload.File, err = c.FormFile("asset")
 	if err != nil {
 		return fmt.Errorf("upload asset: %v", err)
@@ -66,9 +66,10 @@ func (h *AssetHandler) GetAll(c *fiber.Ctx) error {
 func (h *AssetHandler) GetDetail(c *fiber.Ctx) error {
 	// Payload
 	id := c.Params("id")
+	userId := c.Query("userId", "")
 
 	// Use Case
-	asset := h.ExecuteGetDetail(id)
+	asset := h.ExecuteGetDetail(id, userId)
 
 	// Response
 	return c.Status(200).JSON(fiber.Map{
@@ -82,7 +83,7 @@ func (h *AssetHandler) Update(c *fiber.Ctx) error {
 
 	// Payload
 	id := c.Params("id")
-	userId := c.Locals("user_id").(string)
+	userId := c.Locals("userInfo").(entity.UserToken).UserId
 	var payload entity.AddAssetPayload
 	_ = c.BodyParser(&payload)
 
@@ -105,7 +106,7 @@ func (h *AssetHandler) Update(c *fiber.Ctx) error {
 func (h *AssetHandler) Delete(c *fiber.Ctx) error {
 	// Payload
 	id := c.Params("id")
-	userId := c.Locals("user_id").(string)
+	userId := c.Locals("userInfo").(entity.UserToken).UserId
 
 	// Use Case
 	h.VerifyAccess(userId, id)

@@ -11,7 +11,7 @@ type AssetRepository interface {
 	GetPreviewAssets(listCount int, pageList int) []entity.PreviewAsset
 
 	// GetDetailAsset detailed of asset
-	GetDetailAsset(id string) *entity.Asset
+	GetDetailAsset(id string, userId string) *entity.Asset
 
 	// UpdateAsset Updating
 	// Returning old both original and watermarked asset to be removed.

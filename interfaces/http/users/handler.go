@@ -28,8 +28,9 @@ func (h *UserHandler) AddUser(c *fiber.Ctx) error {
 
 	// Response
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"status": "success",
-		"data":   returnedId,
+		"status":  "success",
+		"data":    returnedId,
+		"message": "Successfully registering new user! Welcome!",
 	})
 }
 

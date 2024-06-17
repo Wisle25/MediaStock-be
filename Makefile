@@ -55,6 +55,7 @@ restart:
 	docker-compose down
 	docker-compose up -d --build
 	docker image prune -f
+	docker volume prune -f
 
 minio-access:
 	mc alias set myminio http://localhost:9000 $(MINIO_ACCESS_KEY) $(MINIO_SECRET_KEY)

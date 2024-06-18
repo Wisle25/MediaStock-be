@@ -53,3 +53,10 @@ func NewCartContainer(idGenerator generator.IdGenerator, db *sql.DB) *use_case.C
 	cartUseCase := use_case.NewCartUseCase(cartRepository)
 	return cartUseCase
 }
+
+// Dependency Injection for Transaction Use Case
+func NewTransactionContainer(idGenerator generator.IdGenerator, db *sql.DB) *use_case.TransactionUseCase {
+	transactionRepository := repository.NewTransactionRepositoryPG(idGenerator, db)
+	transactionUseCase := use_case.NewTransactionUseCase(transactionRepository)
+	return transactionUseCase
+}

@@ -11,4 +11,7 @@ type CartRepository interface {
 
 	// RemoveCart remove favorite from user
 	RemoveCart(payload *entity.CartPayload)
+
+	// RemoveAllCartByUser Remove all cart from user, this should be only called when the user is checking out
+	RemoveAllCartByUser(userId string)
 }

@@ -72,6 +72,14 @@ func (uc *AssetUseCase) VerifyAccess(userId string, id string) {
 	uc.assetRepository.VerifyOwner(userId, id)
 }
 
+// ExecuteDownload Returning the asset link, link should be downloaded by the interface
+func (uc *AssetUseCase) ExecuteDownload(id string, userId string) (string, []byte) {
+	title, fileLink := uc.assetRepository.DownloadAsset(id, userId)
+	fileBuffer := uc.fileUpload.GetFile(fileLink)
+
+	return title + filepath.Ext(fileLink), fileBuffer
+}
+
 func (uc *AssetUseCase) handleFileAsset(payload *entity.AddAssetPayload) {
 	// Open asset file
 	file, _ := payload.File.Open()

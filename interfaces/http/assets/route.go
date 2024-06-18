@@ -16,6 +16,7 @@ func NewAssetRouter(
 	app.Post("/assets", jwtMiddleware.GuardJWT, assetHandler.AddAsset)
 	app.Get("/assets", assetHandler.GetAll)
 	app.Get("/assets/:id", assetHandler.GetDetail)
+	app.Get("/assets-download/:id", jwtMiddleware.GuardJWT, assetHandler.DownloadAsset)
 	app.Put("/assets/:id", jwtMiddleware.GuardJWT, assetHandler.Update)
 	app.Delete("/assets/:id", jwtMiddleware.GuardJWT, assetHandler.Delete)
 }

@@ -59,3 +59,16 @@ func (h *CartHandler) DeleteCart(c *fiber.Ctx) error {
 		"message": "Successfully delete a cart",
 	})
 }
+
+func (h *CartHandler) DeleteAlLCart(c *fiber.Ctx) error {
+	// Payload
+	userId := c.Locals("userInfo").(entity.UserToken).UserId
+
+	// Use Case
+	h.useCase.ExecuteRemoveAll(userId)
+
+	// Response
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "success",
+	})
+}

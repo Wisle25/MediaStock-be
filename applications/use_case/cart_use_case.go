@@ -16,16 +16,22 @@ func NewCartUseCase(repository repository.CartRepository) *CartUseCase {
 }
 
 // ExecuteAdd will panic if user and asset is not existed
-func (f *CartUseCase) ExecuteAdd(payload *entity.CartPayload) {
-	f.repository.AddToCart(payload)
+func (u *CartUseCase) ExecuteAdd(payload *entity.CartPayload) {
+	u.repository.AddToCart(payload)
 }
 
-// ExecuteGetAll returns favorited asset by user id
-func (f *CartUseCase) ExecuteGetAll(userId string) []entity.Cart {
-	return f.repository.GetAllCarts(userId)
+// ExecuteGetAll returns carts asset by user id
+func (u *CartUseCase) ExecuteGetAll(userId string) []entity.Cart {
+	return u.repository.GetAllCarts(userId)
 }
 
-// ExecuteRemove remove favorite from user
-func (f *CartUseCase) ExecuteRemove(payload *entity.CartPayload) {
-	f.repository.RemoveCart(payload)
+// ExecuteRemove remove cart from user
+func (u *CartUseCase) ExecuteRemove(payload *entity.CartPayload) {
+	u.repository.RemoveCart(payload)
+}
+
+// ExecuteRemoveAll Remove all carts item from user,
+// WARNING! This only be called AFTER the checkout is success!
+func (u *CartUseCase) ExecuteRemoveAll(userId string) {
+	u.repository.RemoveAllCartByUser(userId)
 }

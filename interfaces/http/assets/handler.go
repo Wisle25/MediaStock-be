@@ -123,3 +123,19 @@ func (h *AssetHandler) Delete(c *fiber.Ctx) error {
 		"message": "Successfully delete asset!",
 	})
 }
+
+func (h *AssetHandler) DownloadAsset(c *fiber.Ctx) error {
+	// Payload
+	id := c.Params("id")
+	userId := c.Locals("userInfo").(entity.UserToken).UserId
+
+	// Use Case
+	title, fileBuffer := h.AssetUseCase.ExecuteDownload(id, userId)
+
+	// Response
+	c.Set("Content-Disposition", "attachment; filename="+title)
+	c.Set("Content-Type", "application/octet-stream")
+
+	// Send the file to the client
+	return c.Send(fileBuffer)
+}

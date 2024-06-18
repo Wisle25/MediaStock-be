@@ -105,12 +105,21 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 				a.price,
 				a.created_at, 
 				a.updated_at,
-				COUNT(f.id) AS favorite_count,
-				CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite
+				COUNT(DISTINCT f.id) AS favorite_count,
+				COUNT(DISTINCT ti.id) AS purchased_count,
+				CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite,
+				CASE WHEN EXISTS (
+					SELECT 1 
+					FROM transaction_items ti_user
+					JOIN transactions t_user ON ti_user.transaction_id = t_user.id
+					WHERE ti_user.asset_id = a.id AND t_user.user_id = $2
+				) THEN true ELSE false END AS is_purchased
 			FROM assets a
 			INNER JOIN users u ON a.owner_id = u.id
 			LEFT JOIN favorites f ON a.id = f.asset_id
 			LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $2
+			LEFT JOIN transaction_items ti ON a.id = ti.asset_id
+			LEFT JOIN transactions t ON t.id = ti.transaction_id
 			WHERE a.id = $1
 			GROUP BY a.id, u.id, u.username, a.title, a.file_path, a.file_watermark_path, a.description, a.details, a.price, a.created_at, a.updated_at, uf.asset_id`
 	err := r.db.QueryRow(query, id, userId).Scan(
@@ -126,7 +135,9 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 		&result.CreatedAt,
 		&result.UpdatedAt,
 		&result.FavoriteCount,
+		&result.PurchasedCount,
 		&result.IsFavorite,
+		&result.IsPurchased,
 	)
 
 	// Evaluate
@@ -234,4 +245,36 @@ func (r *AssetRepositoryPG) VerifyOwner(userId string, id string) {
 	if userId != ownerId {
 		panic(fiber.NewError(fiber.StatusForbidden, "You don't have permission to do the action!"))
 	}
+}
+
+func (r *AssetRepositoryPG) DownloadAsset(id string, userId string) (string, string) {
+	var title string
+	var originalLink string
+	var isPurchased bool
+
+	// Query
+	query := `
+		SELECT 
+		    a.title,
+			a.file_path,
+			CASE WHEN ti.asset_id IS NOT NULL THEN true ELSE false END AS is_purchased
+		FROM assets a
+		LEFT JOIN transaction_items ti ON a.id = ti.asset_id
+		LEFT JOIN transactions t ON t.id = ti.transaction_id AND t.user_id = $2
+		WHERE a.id = $1`
+	err := r.db.QueryRow(query, id, userId).Scan(&title, &originalLink, &isPurchased)
+
+	// Evaluate
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			panic(fiber.NewError(fiber.StatusNotFound, "Asset is not existed!"))
+		}
+		panic(fmt.Errorf("download_asset_err: %v", err))
+	}
+
+	if !isPurchased {
+		panic(fiber.NewError(fiber.StatusForbidden, "You haven't purchased the asset!"))
+	}
+
+	return title, originalLink
 }

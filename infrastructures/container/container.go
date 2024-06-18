@@ -82,3 +82,16 @@ func NewCartContainer(
 
 	return nil
 }
+
+// Dependency Injection for Transaction Use Case
+func NewTransactionContainer(
+	idGenerator generator.IdGenerator,
+	db *sql.DB,
+) *use_case.TransactionUseCase {
+	wire.Build(
+		repository.NewTransactionRepositoryPG,
+		use_case.NewTransactionUseCase,
+	)
+
+	return nil
+}

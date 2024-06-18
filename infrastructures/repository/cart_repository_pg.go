@@ -22,12 +22,12 @@ func NewCartRepositoryPG(idGenerator generator.IdGenerator, db *sql.DB) reposito
 	}
 }
 
-func (f *CartRepositoryPG) AddToCart(payload *entity.CartPayload) {
-	id := f.idGenerator.Generate()
+func (t *CartRepositoryPG) AddToCart(payload *entity.CartPayload) {
+	id := t.idGenerator.Generate()
 
 	// Query
 	query := "INSERT INTO carts(id, asset_id, user_id) VALUES ($1, $2, $3)"
-	result, err := f.db.Exec(query, id, payload.AssetId, payload.UserId)
+	result, err := t.db.Exec(query, id, payload.AssetId, payload.UserId)
 
 	// Evaluate
 	if err != nil {
@@ -39,7 +39,7 @@ func (f *CartRepositoryPG) AddToCart(payload *entity.CartPayload) {
 	}
 }
 
-func (f *CartRepositoryPG) GetAllCarts(userId string) []entity.Cart {
+func (t *CartRepositoryPG) GetAllCarts(userId string) []entity.Cart {
 	// Query
 	query := `
 			SELECT 
@@ -50,7 +50,7 @@ func (f *CartRepositoryPG) GetAllCarts(userId string) []entity.Cart {
 			FROM carts f
 			INNER JOIN assets a ON f.asset_id = a.id
 			WHERE user_id = $1`
-	rows, err := f.db.Query(query, userId)
+	rows, err := t.db.Query(query, userId)
 
 	// Evaluate
 	if err != nil {
@@ -60,17 +60,32 @@ func (f *CartRepositoryPG) GetAllCarts(userId string) []entity.Cart {
 	return services.GetTableDB[entity.Cart](rows)
 }
 
-func (f *CartRepositoryPG) RemoveCart(payload *entity.CartPayload) {
+func (t *CartRepositoryPG) RemoveCart(payload *entity.CartPayload) {
 	// Query
 	query := "DELETE FROM carts WHERE asset_id = $1 AND user_id = $2"
-	result, err := f.db.Exec(query, payload.AssetId, payload.UserId)
+	result, err := t.db.Exec(query, payload.AssetId, payload.UserId)
 
 	// Evaluate
 	if err != nil {
-		panic(fmt.Errorf("remove_favorite_err: %v", err))
+		panic(fmt.Errorf("remove_cart_err: %v", err))
 	}
 
 	if affected, _ := result.RowsAffected(); affected == 0 {
-		panic(fiber.NewError(fiber.StatusBadRequest, "Unable to remove favorite"))
+		panic(fiber.NewError(fiber.StatusBadRequest, "Unable to remove cart"))
+	}
+}
+
+func (t *CartRepositoryPG) RemoveAllCartByUser(userId string) {
+	// Query
+	query := "DELETE FROM carts WHERE user_id = $1"
+	result, err := t.db.Exec(query, userId)
+
+	// Evaluate
+	if err != nil {
+		panic(fmt.Errorf("remove_cart_by_user_err: %v", err))
+	}
+
+	if affected, _ := result.RowsAffected(); affected == 0 {
+		panic(fiber.NewError(fiber.StatusBadRequest, "Unable to remove all carts"))
 	}
 }

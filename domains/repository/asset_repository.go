@@ -24,4 +24,8 @@ type AssetRepository interface {
 	// VerifyOwner verifying the owner
 	// Should raise panic if userId is not the owner
 	VerifyOwner(userId string, id string)
+
+	// DownloadAsset Verify is the user already purchased the asset.
+	// Returning the asset title and original filepath to be downloaded
+	DownloadAsset(id string, userId string) (string, string)
 }

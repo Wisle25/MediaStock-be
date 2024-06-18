@@ -46,3 +46,10 @@ func NewFavoriteContainer(idGenerator generator.IdGenerator, db *sql.DB) *use_ca
 	favoriteUseCase := use_case.NewFavoriteUseCase(favoriteRepository)
 	return favoriteUseCase
 }
+
+// Dependency Injection for Cart Use Case
+func NewCartContainer(idGenerator generator.IdGenerator, db *sql.DB) *use_case.CartUseCase {
+	cartRepository := repository.NewCartRepositoryPG(idGenerator, db)
+	cartUseCase := use_case.NewCartUseCase(cartRepository)
+	return cartUseCase
+}

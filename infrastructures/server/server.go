@@ -14,6 +14,7 @@ import (
 	"github.com/wisle25/media-stock-be/infrastructures/generator"
 	"github.com/wisle25/media-stock-be/infrastructures/services"
 	"github.com/wisle25/media-stock-be/interfaces/http/assets"
+	"github.com/wisle25/media-stock-be/interfaces/http/carts"
 	"github.com/wisle25/media-stock-be/interfaces/http/favorites"
 	"github.com/wisle25/media-stock-be/interfaces/http/middlewares"
 	"github.com/wisle25/media-stock-be/interfaces/http/users"
@@ -82,6 +83,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 	)
 	assetUseCase := container.NewAssetContainer(uuidGenerator, db, vipsFileProcessing, minioFileUpload, validation)
 	favoriteUseCase := container.NewFavoriteContainer(uuidGenerator, db)
+	cartUseCase := container.NewCartContainer(uuidGenerator, db)
 
 	// Custom Middleware
 	jwtMiddleware := middlewares.NewJwtMiddleware(userUseCase)
@@ -90,6 +92,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 	users.NewUserRouter(app, jwtMiddleware, userUseCase)
 	assets.NewAssetRouter(app, jwtMiddleware, assetUseCase)
 	favorites.NewFavoriteRouter(app, jwtMiddleware, favoriteUseCase)
+	carts.NewCartRouter(app, jwtMiddleware, cartUseCase)
 
 	return app
 }

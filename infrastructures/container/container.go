@@ -69,3 +69,16 @@ func NewFavoriteContainer(
 
 	return nil
 }
+
+// Dependency Injection for Cart Use Case
+func NewCartContainer(
+	idGenerator generator.IdGenerator,
+	db *sql.DB,
+) *use_case.CartUseCase {
+	wire.Build(
+		repository.NewCartRepositoryPG,
+		use_case.NewCartUseCase,
+	)
+
+	return nil
+}

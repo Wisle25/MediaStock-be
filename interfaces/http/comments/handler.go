@@ -18,7 +18,7 @@ func (h *CommentHandler) AddComment(c *fiber.Ctx) error {
 	// Payload
 	var payload entity.CreateCommentPayload
 	_ = c.BodyParser(&payload)
-	payload.UserId = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserId = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	commentId := h.useCase.ExecuteCreate(&payload)

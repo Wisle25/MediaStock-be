@@ -55,15 +55,26 @@ func (r *UserRepositoryPG) AddUser(payload *entity.RegisterUserPayload) string {
 	return returnedId
 }
 
-func (r *UserRepositoryPG) GetUserForLogin(identity string) (*entity.UserToken, string) {
-	var userToken entity.UserToken
+func (r *UserRepositoryPG) GetUserForLogin(identity string) (*entity.User, string) {
+	var userToken entity.User
 	var encryptedPassword string
 
 	// Query
-	query := "SELECT id, username, is_verified, password FROM users WHERE email = $1 OR username = $1"
+	query := `
+		SELECT 
+		    id, 
+		    username,
+		    email,
+		    avatar_link,
+		    is_verified, 
+		    password 
+		FROM users 
+		WHERE email = $1 OR username = $1`
 	err := r.db.QueryRow(query, identity).Scan(
-		&userToken.UserId,
+		&userToken.Id,
 		&userToken.Username,
+		&userToken.Email,
+		&userToken.AvatarLink,
 		&userToken.IsVerified,
 		&encryptedPassword,
 	)
@@ -105,7 +116,7 @@ func (r *UserRepositoryPG) GetUserById(id string) *entity.User {
 }
 
 func (r *UserRepositoryPG) UpdateUserById(id string, payload *entity.UpdateUserPayload, newAvatarLink string) string {
-	// Update query with CTE to return the old avatar_link
+	// Base query and arguments (Only updating the password if its not empty)
 	query := `
 		WITH old_data AS (
 			SELECT avatar_link
@@ -113,14 +124,24 @@ func (r *UserRepositoryPG) UpdateUserById(id string, payload *entity.UpdateUserP
 			WHERE id = $1
 		)
 		UPDATE users 
-		SET username = $2, email = $3, password = $4, avatar_link = $5
+		SET username = $2, email = $3, avatar_link = $4`
+
+	args := []interface{}{id, payload.Username, payload.Email, newAvatarLink}
+
+	// Conditionally add password update
+	if payload.Password != "" {
+		query += `, password = $5`
+		args = append(args, payload.Password)
+	}
+
+	query += `
 		FROM old_data
 		WHERE users.id = $1
-		RETURNING old_data.avatar_link
-	`
+		RETURNING old_data.avatar_link`
 
+	// Execute the query
 	var oldAvatarLink string
-	err := r.db.QueryRow(query, id, payload.Username, payload.Email, payload.Password, newAvatarLink).Scan(&oldAvatarLink)
+	err := r.db.QueryRow(query, args...).Scan(&oldAvatarLink)
 
 	// Evaluate
 	if err != nil {

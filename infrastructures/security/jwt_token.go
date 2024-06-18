@@ -26,7 +26,7 @@ func NewJwtToken(idGenerator generator.IdGenerator) security.Token {
 
 // CreateToken generates a new JWT token for a given user ID and time-to-live duration.
 // It uses the provided private key to sign the token.
-func (jt *JwtToken) CreateToken(userToken *entity.UserToken, ttl time.Duration, privateKey string) *entity.TokenDetail {
+func (jt *JwtToken) CreateToken(userToken *entity.User, ttl time.Duration, privateKey string) *entity.TokenDetail {
 	now := time.Now().UTC()
 
 	// Creating token details
@@ -51,8 +51,10 @@ func (jt *JwtToken) CreateToken(userToken *entity.UserToken, ttl time.Duration, 
 
 	// Define JWT claims
 	atClaims := jwt.MapClaims{
-		"sub":         userToken.UserId,
+		"sub":         userToken.Id,
 		"username":    userToken.Username,
+		"email":       userToken.Email,
+		"avatar_link": userToken.AvatarLink,
 		"is_verified": userToken.IsVerified,
 		"token_id":    td.TokenId,
 		"exp":         td.ExpiresIn,
@@ -111,9 +113,11 @@ func (jt *JwtToken) ValidateToken(token string, publicKey string) *entity.TokenD
 	}
 
 	// Return the token details
-	userToken := &entity.UserToken{
-		UserId:     claims["sub"].(string),
+	userToken := &entity.User{
+		Id:         claims["sub"].(string),
 		Username:   claims["username"].(string),
+		Email:      claims["email"].(string),
+		AvatarLink: claims["avatar_link"].(string),
 		IsVerified: claims["is_verified"].(bool),
 	}
 

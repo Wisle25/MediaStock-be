@@ -19,7 +19,7 @@ func (h *RatingHandler) AddRating(c *fiber.Ctx) error {
 	var payload entity.CreateRatingPayload
 	_ = c.BodyParser(&payload)
 
-	payload.UserId = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserId = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	id := h.useCase.ExecuteCreate(&payload)

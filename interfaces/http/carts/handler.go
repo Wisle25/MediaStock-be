@@ -18,7 +18,7 @@ func (h *CartHandler) AddCart(c *fiber.Ctx) error {
 	// Payload
 	var payload entity.CartPayload
 	payload.AssetId = c.Params("id")
-	payload.UserId = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserId = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	h.useCase.ExecuteAdd(&payload)
@@ -32,7 +32,7 @@ func (h *CartHandler) AddCart(c *fiber.Ctx) error {
 
 func (h *CartHandler) GetAllCarts(c *fiber.Ctx) error {
 	// Payload
-	userId := c.Locals("userInfo").(entity.UserToken).UserId
+	userId := c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	carts := h.useCase.ExecuteGetAll(userId)
@@ -48,7 +48,7 @@ func (h *CartHandler) DeleteCart(c *fiber.Ctx) error {
 	// Payload
 	var payload entity.CartPayload
 	payload.AssetId = c.Params("id")
-	payload.UserId = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserId = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	h.useCase.ExecuteRemove(&payload)
@@ -62,7 +62,7 @@ func (h *CartHandler) DeleteCart(c *fiber.Ctx) error {
 
 func (h *CartHandler) DeleteAllCart(c *fiber.Ctx) error {
 	// Payload
-	userId := c.Locals("userInfo").(entity.UserToken).UserId
+	userId := c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	h.useCase.ExecuteRemoveAll(userId)

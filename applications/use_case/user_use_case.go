@@ -70,8 +70,8 @@ func (uc *UserUseCase) ExecuteAdd(payload *entity.RegisterUserPayload) string {
 // SendEmailActivation sending email activation to user
 func (uc *UserUseCase) SendEmailActivation(payload *entity.RegisterUserPayload, registeredId string) {
 	activationToken := uc.token.CreateToken(
-		&entity.UserToken{
-			UserId: registeredId,
+		&entity.User{
+			Id: registeredId,
 		},
 		uc.config.AccessTokenExpiresIn,
 		uc.config.AccessTokenPrivateKey,
@@ -101,7 +101,7 @@ func (uc *UserUseCase) SendEmailActivation(payload *entity.RegisterUserPayload, 
 // Receiving payload token, so it can get user id when validating it
 func (uc *UserUseCase) ExecuteActivate(payloadToken string) {
 	tokenDetail := uc.token.ValidateToken(payloadToken, uc.config.AccessTokenPublicKey)
-	uc.userRepository.ActivateAccount(tokenDetail.UserToken.UserId)
+	uc.userRepository.ActivateAccount(tokenDetail.UserToken.Id)
 }
 
 // ExecuteLogin Handling user login. Returning user's token for authentication/authorization later.
@@ -141,7 +141,7 @@ func (uc *UserUseCase) ExecuteRefreshToken(currentRefreshToken string) *entity.T
 	userInfoJSON := uc.cache.GetCache(tokenClaims.TokenId).(string)
 
 	// Unmarshal user info JSON
-	var userInfo entity.UserToken
+	var userInfo entity.User
 	err := json.Unmarshal([]byte(userInfoJSON), &userInfo)
 	if err != nil {
 		panic(fmt.Errorf("refresh_token_err: unable to unmarshal json user info: %v", err))
@@ -185,15 +185,20 @@ func (uc *UserUseCase) ExecuteGetUserById(userId string) *entity.User {
 func (uc *UserUseCase) ExecuteUpdateUserById(userId string, payload *entity.UpdateUserPayload) {
 	uc.validator.ValidateUpdatePayload(payload)
 
-	// Hash password
-	payload.Password = uc.passwordHash.Hash(payload.Password)
+	// Hash password if provided only
+	if payload.Password != "" {
+		payload.Password = uc.passwordHash.Hash(payload.Password)
+	}
 
+	newAvatarLink := ""
 	// Handling avatar file
-	file, _ := payload.Avatar.Open()
-	fileBuffer, _ := io.ReadAll(file)
+	if payload.Avatar != nil {
+		file, _ := payload.Avatar.Open()
+		fileBuffer, _ := io.ReadAll(file)
 
-	compressedBuffer, extension := uc.fileProcessing.CompressImage(fileBuffer, file_statics.WEBP)
-	newAvatarLink := uc.fileUpload.UploadFile(compressedBuffer, extension)
+		compressedBuffer, extension := uc.fileProcessing.CompressImage(fileBuffer, file_statics.WEBP)
+		newAvatarLink = uc.fileUpload.UploadFile(compressedBuffer, extension)
+	}
 
 	// Updating user's repository
 	oldAvatarLink := uc.userRepository.UpdateUserById(userId, payload, newAvatarLink)

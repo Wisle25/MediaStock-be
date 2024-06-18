@@ -41,8 +41,8 @@ func (v *GoValidateUser) ValidateUpdatePayload(payload *entity.UpdateUserPayload
 	schema := map[string]string{
 		"Username":        "required,min=3,max=50,alphanum",
 		"Email":           "required,email",
-		"Password":        "required,min=8",
-		"ConfirmPassword": "required,min=8," + fmt.Sprintf("eq=%s", services.FieldValue(payload, "Password")),
+		"Password":        "omitempty,min=8",
+		"ConfirmPassword": "omitempty,min=8," + fmt.Sprintf("eq=%s", services.FieldValue(payload, "Password")),
 	}
 
 	services.Validate(payload, schema, v.validation)

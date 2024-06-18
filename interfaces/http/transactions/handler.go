@@ -21,7 +21,7 @@ func (h *TransactionHandler) AddTransaction(c *fiber.Ctx) error {
 	var payload entity.CreateTransactionPayload
 	_ = c.BodyParser(&payload)
 
-	payload.UserID = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserID = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	returnedId := h.useCase.ExecuteCreate(&payload)
@@ -36,7 +36,7 @@ func (h *TransactionHandler) AddTransaction(c *fiber.Ctx) error {
 
 func (h *TransactionHandler) GetTransactionByUser(c *fiber.Ctx) error {
 	// Payload
-	userId := c.Locals("userInfo").(entity.UserToken).UserId
+	userId := c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	transactions := h.useCase.ExecuteGetByUser(userId)

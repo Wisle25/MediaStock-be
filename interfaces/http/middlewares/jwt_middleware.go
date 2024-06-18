@@ -33,7 +33,7 @@ func (m *JwtMiddleware) GuardJWT(c *fiber.Ctx) error {
 	}
 
 	// Unmarshal userInfo JSON
-	var userInfo entity.UserToken
+	var userInfo entity.User
 	err := json.Unmarshal([]byte(userInfoJSON.(string)), &userInfo)
 	if err != nil {
 		panic(fmt.Errorf("refresh_token_err: unable to unmarshal json user info: %v", err))

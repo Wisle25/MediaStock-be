@@ -18,7 +18,7 @@ func (h *FavoriteHandler) AddFavorite(c *fiber.Ctx) error {
 	// Payload
 	var payload entity.FavoritePayload
 	payload.AssetId = c.Params("id")
-	payload.UserId = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserId = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	h.useCase.ExecuteAdd(&payload)
@@ -32,7 +32,7 @@ func (h *FavoriteHandler) AddFavorite(c *fiber.Ctx) error {
 
 func (h *FavoriteHandler) GetAllFavorites(c *fiber.Ctx) error {
 	// Payload
-	userId := c.Locals("userInfo").(entity.UserToken).UserId
+	userId := c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	favorites := h.useCase.ExecuteGetAll(userId)
@@ -48,7 +48,7 @@ func (h *FavoriteHandler) DeleteFavorite(c *fiber.Ctx) error {
 	// Payload
 	var payload entity.FavoritePayload
 	payload.AssetId = c.Params("id")
-	payload.UserId = c.Locals("userInfo").(entity.UserToken).UserId
+	payload.UserId = c.Locals("userInfo").(entity.User).Id
 
 	// Use Case
 	h.useCase.ExecuteRemove(&payload)

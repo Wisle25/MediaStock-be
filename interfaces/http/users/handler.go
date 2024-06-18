@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/wisle25/media-stock-be/applications/use_case"
 	"github.com/wisle25/media-stock-be/domains/entity"
+	"strings"
 	"time"
 )
 
@@ -154,7 +155,7 @@ func (h *UserHandler) GetUserById(c *fiber.Ctx) error {
 func (h *UserHandler) GetLoggedUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "success",
-		"data":   c.Locals("userInfo").(entity.UserToken),
+		"data":   c.Locals("userInfo").(entity.User),
 	})
 }
 
@@ -163,7 +164,7 @@ func (h *UserHandler) UpdateUserById(c *fiber.Ctx) error {
 
 	// Make sure to update self (not by others)
 	id := c.Params("id")
-	loggedUserId := c.Locals("userInfo").(entity.UserToken).UserId
+	loggedUserId := c.Locals("userInfo").(entity.User).Id
 
 	if loggedUserId != id {
 		return fiber.NewError(
@@ -178,7 +179,11 @@ func (h *UserHandler) UpdateUserById(c *fiber.Ctx) error {
 
 	payload.Avatar, err = c.FormFile("avatar")
 	if err != nil {
-		return fmt.Errorf("upload avatar: %v", err)
+		if !strings.Contains(err.Error(), "there is no uploaded") {
+			return fmt.Errorf("upload avatar: %v", err)
+		}
+
+		payload.Avatar = nil
 	}
 
 	// Use Case

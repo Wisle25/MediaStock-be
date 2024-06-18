@@ -60,3 +60,11 @@ func NewTransactionContainer(idGenerator generator.IdGenerator, db *sql.DB) *use
 	transactionUseCase := use_case.NewTransactionUseCase(transactionRepository)
 	return transactionUseCase
 }
+
+// Dependency Injection for Rating Use Case
+func NewRatingContainer(idGenerator generator.IdGenerator, db *sql.DB, validator *services.Validation) *use_case.RatingUseCase {
+	ratingRepository := repository.NewRatingRepositoryPG(db, idGenerator)
+	validateRating := validation.NewGoValidateRating(validator)
+	ratingUseCase := use_case.NewRatingUseCase(ratingRepository, validateRating)
+	return ratingUseCase
+}

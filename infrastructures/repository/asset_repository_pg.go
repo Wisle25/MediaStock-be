@@ -66,12 +66,14 @@ func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId
 				a.title, 
 				a.file_watermark_path, 
 				a.description,
+				COALESCE(AVG(r.score), 0) AS rating,
 				COUNT(f.id) AS favorite_count,
 				CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite
 			FROM assets a
 			INNER JOIN users u ON a.owner_id = u.id
 			LEFT JOIN favorites f ON a.id = f.asset_id
 			LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $3
+			LEFT JOIN ratings r ON a.id = r.asset_id
 			GROUP BY a.id, u.username, a.title, a.file_watermark_path, a.description, a.created_at, uf.asset_id
 			ORDER BY a.created_at DESC
 			LIMIT $1 OFFSET $2`
@@ -113,13 +115,15 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 					FROM transaction_items ti_user
 					JOIN transactions t_user ON ti_user.transaction_id = t_user.id
 					WHERE ti_user.asset_id = a.id AND t_user.user_id = $2
-				) THEN true ELSE false END AS is_purchased
+				) THEN true ELSE false END AS is_purchased,
+				COALESCE(AVG(r.score), 0) AS rating
 			FROM assets a
 			INNER JOIN users u ON a.owner_id = u.id
 			LEFT JOIN favorites f ON a.id = f.asset_id
 			LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $2
 			LEFT JOIN transaction_items ti ON a.id = ti.asset_id
 			LEFT JOIN transactions t ON t.id = ti.transaction_id
+			LEFT JOIN ratings r ON a.id = r.asset_id
 			WHERE a.id = $1
 			GROUP BY a.id, u.id, u.username, a.title, a.file_path, a.file_watermark_path, a.description, a.details, a.price, a.created_at, a.updated_at, uf.asset_id`
 	err := r.db.QueryRow(query, id, userId).Scan(
@@ -138,6 +142,7 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 		&result.PurchasedCount,
 		&result.IsFavorite,
 		&result.IsPurchased,
+		&result.Rating,
 	)
 
 	// Evaluate

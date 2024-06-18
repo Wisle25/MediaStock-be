@@ -60,7 +60,7 @@ func (h *CartHandler) DeleteCart(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CartHandler) DeleteAlLCart(c *fiber.Ctx) error {
+func (h *CartHandler) DeleteAllCart(c *fiber.Ctx) error {
 	// Payload
 	userId := c.Locals("userInfo").(entity.UserToken).UserId
 

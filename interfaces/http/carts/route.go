@@ -16,5 +16,5 @@ func NewCartRouter(
 	app.Post("/carts/:id", jwtMiddleware.GuardJWT, cartHandler.AddCart)
 	app.Get("/carts", jwtMiddleware.GuardJWT, cartHandler.GetAllCarts)
 	app.Delete("/carts/:id", jwtMiddleware.GuardJWT, cartHandler.DeleteCart)
-	app.Delete("/carts", jwtMiddleware.GuardJWT, cartHandler.DeleteAlLCart)
+	app.Delete("/carts", jwtMiddleware.GuardJWT, cartHandler.DeleteAllCart)
 }

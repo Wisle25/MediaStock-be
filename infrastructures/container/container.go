@@ -95,3 +95,18 @@ func NewTransactionContainer(
 
 	return nil
 }
+
+// Dependency Injection for Rating Use Case
+func NewRatingContainer(
+	idGenerator generator.IdGenerator,
+	db *sql.DB,
+	validator *services.Validation,
+) *use_case.RatingUseCase {
+	wire.Build(
+		validation.NewGoValidateRating,
+		repository.NewRatingRepositoryPG,
+		use_case.NewRatingUseCase,
+	)
+
+	return nil
+}

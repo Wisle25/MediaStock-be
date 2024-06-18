@@ -8,7 +8,7 @@ type AssetRepository interface {
 	AddAsset(payload *entity.AddAssetPayload) string
 
 	// GetPreviewAssets Getting all assets but only the preview
-	GetPreviewAssets(listCount int, pageList int) []entity.PreviewAsset
+	GetPreviewAssets(listCount int, pageList int, userId string) []entity.PreviewAsset
 
 	// GetDetailAsset detailed of asset
 	GetDetailAsset(id string, userId string) *entity.Asset

@@ -3,6 +3,7 @@
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/wisle25/media-stock-be/applications/use_case"
 	"github.com/wisle25/media-stock-be/domains/entity"
 	"strconv"
@@ -53,8 +54,11 @@ func (h *AssetHandler) GetAll(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	defaultId, _ := uuid.NewV7() // This is to prevent invalid UUID by SQL
+	userId := c.Query("userId", defaultId.String())
+
 	// Use Case
-	assets := h.ExecuteGetAll(listCount, pageList)
+	assets := h.ExecuteGetAll(listCount, pageList, userId)
 
 	// Response
 	return c.Status(200).JSON(fiber.Map{
@@ -66,7 +70,8 @@ func (h *AssetHandler) GetAll(c *fiber.Ctx) error {
 func (h *AssetHandler) GetDetail(c *fiber.Ctx) error {
 	// Payload
 	id := c.Params("id")
-	userId := c.Query("userId", "")
+	defaultId, _ := uuid.NewV7() // This is to prevent invalid UUID by SQL
+	userId := c.Query("userId", defaultId.String())
 
 	// Use Case
 	asset := h.ExecuteGetDetail(id, userId)

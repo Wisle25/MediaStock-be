@@ -39,3 +39,10 @@ func NewAssetContainer(idGenerator generator.IdGenerator, db *sql.DB, fileProces
 	assetUseCase := use_case.NewAssetUseCase(assetRepository, fileProcessing, fileUpload, validateAsset)
 	return assetUseCase
 }
+
+// Dependency Injection for Favorite Use Case
+func NewFavoriteContainer(idGenerator generator.IdGenerator, db *sql.DB) *use_case.FavoriteUseCase {
+	favoriteRepository := repository.NewFavoriteRepositoryPG(idGenerator, db)
+	favoriteUseCase := use_case.NewFavoriteUseCase(favoriteRepository)
+	return favoriteUseCase
+}

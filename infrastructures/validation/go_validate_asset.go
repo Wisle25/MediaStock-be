@@ -18,9 +18,10 @@ func NewGoValidateAsset(validation *services.Validation) validation.ValidateAsse
 
 func (g *GoValidateAsset) ValidatePayload(payload *entity.AddAssetPayload) {
 	schema := map[string]string{
-		"title": "required,min=5,max=100",
-		//"description": "max=255",
-		//"details":     "max=500",
+		"Title":       "required,min=5,max=100",
+		"Price":       "required",
+		"Description": "required,max=255",
+		"Details":     "max=500",
 	}
 
 	services.Validate(payload, schema, g.v)

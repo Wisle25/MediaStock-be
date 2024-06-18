@@ -10,6 +10,7 @@ type AddAssetPayload struct {
 	File          *multipart.FileHeader
 	Description   string `json:"description"`
 	Details       string `json:"details"`
+	Price         string `json:"price"`
 	OwnerId       string
 	OriginalLink  string
 	WatermarkLink string
@@ -21,6 +22,8 @@ type PreviewAsset struct {
 	Title         string `json:"title"`
 	FilePath      string `json:"file_watermark_path"`
 	Description   string `json:"description"`
+	FavoriteCount int    `json:"favorite_count"`
+	IsFavorite    bool   `json:"is_favorite"`
 }
 
 type Asset struct {
@@ -31,6 +34,9 @@ type Asset struct {
 	FilePath      string    `json:"file_watermark_path"`
 	Description   string    `json:"description"`
 	Details       string    `json:"details"`
+	Price         string    `json:"price"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	FavoriteCount int       `json:"favorite_count"`
+	IsFavorite    bool      `json:"is_favorite"`
 }

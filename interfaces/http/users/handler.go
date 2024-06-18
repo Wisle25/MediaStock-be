@@ -71,7 +71,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		Name:     "refresh_token",
 		Value:    refreshTokenDetail.Token,
 		Path:     "/",
-		MaxAge:   accessTokenDetail.MaxAge,
+		MaxAge:   refreshTokenDetail.MaxAge,
 		Secure:   true,
 		HTTPOnly: true,
 		Domain:   "localhost",

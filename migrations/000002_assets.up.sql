@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS assets(
     file_path TEXT NOT NULL,
     file_watermark_path TEXT NOT NULL,
     description VARCHAR(255) NOT NULL,
+    price BIGINT NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     updated_at TIMESTAMP DEFAULT now() NOT NULL,

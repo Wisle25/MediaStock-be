@@ -29,9 +29,9 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AddAssetPayload) string {
 
 	// Query
 	query := `INSERT INTO 
-    			assets(id, title, file_path, file_watermark_path, description, details, owner_id) 
+    			assets(id, title, file_path, file_watermark_path, description, details, price, owner_id) 
 			  VALUES
-			      ($1, $2, $3, $4, $5, $6, $7)
+			      ($1, $2, $3, $4, $5, $6, $7, $8)
 			  RETURNING id`
 	var returnedId string
 	err := r.db.QueryRow(
@@ -42,6 +42,7 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AddAssetPayload) string {
 		payload.WatermarkLink,
 		payload.Description,
 		payload.Details,
+		payload.Price,
 		payload.OwnerId,
 	).Scan(&returnedId)
 
@@ -53,7 +54,7 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AddAssetPayload) string {
 	return returnedId
 }
 
-func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int) []entity.PreviewAsset {
+func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId string) []entity.PreviewAsset {
 	// Pagination
 	offset := (pageList - 1) * listCount
 
@@ -64,12 +65,17 @@ func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int) []enti
 				u.username AS owner_username, 
 				a.title, 
 				a.file_watermark_path, 
-				a.description 
+				a.description,
+				COUNT(f.id) AS favorite_count,
+				CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite
 			FROM assets a
 			INNER JOIN users u ON a.owner_id = u.id
+			LEFT JOIN favorites f ON a.id = f.asset_id
+			LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $3
+			GROUP BY a.id, u.username, a.title, a.file_watermark_path, a.description, a.created_at, uf.asset_id
 			ORDER BY a.created_at DESC
 			LIMIT $1 OFFSET $2`
-	rows, err := r.db.Query(query, listCount, offset)
+	rows, err := r.db.Query(query, listCount, offset, userId)
 
 	// Evaluate
 	if err != nil {
@@ -94,14 +100,20 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 				a.title, 
 				a.file_path,
 				a.file_watermark_path,
-				a.description, 
+				a.description,
 				a.details, 
+				a.price,
 				a.created_at, 
-				a.updated_at 
+				a.updated_at,
+				COUNT(f.id) AS favorite_count,
+				CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite
 			FROM assets a
 			INNER JOIN users u ON a.owner_id = u.id
-			WHERE a.id = $1`
-	err := r.db.QueryRow(query, id).Scan(
+			LEFT JOIN favorites f ON a.id = f.asset_id
+			LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $2
+			WHERE a.id = $1
+			GROUP BY a.id, u.id, u.username, a.title, a.file_path, a.file_watermark_path, a.description, a.details, a.price, a.created_at, a.updated_at, uf.asset_id`
+	err := r.db.QueryRow(query, id, userId).Scan(
 		&result.Id,
 		&result.OwnerId,
 		&result.OwnerUsername,
@@ -110,8 +122,11 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 		&watermarkPath,
 		&result.Description,
 		&result.Details,
+		&result.Price,
 		&result.CreatedAt,
 		&result.UpdatedAt,
+		&result.FavoriteCount,
+		&result.IsFavorite,
 	)
 
 	// Evaluate
@@ -152,6 +167,7 @@ func (r *AssetRepositoryPG) UpdateAsset(id string, payload *entity.AddAssetPaylo
 			    file_watermark_path = $4,
 				description = $5, 
 				details = $6,
+				price = $7,
 				updated_at = NOW()
 			FROM old_data
 			WHERE id = $1
@@ -164,6 +180,7 @@ func (r *AssetRepositoryPG) UpdateAsset(id string, payload *entity.AddAssetPaylo
 		payload.WatermarkLink,
 		payload.Description,
 		payload.Details,
+		payload.Price,
 	).Scan(&oldOriginalLink, &oldWatermarkLink)
 
 	// Evaluate

@@ -31,15 +31,15 @@ func NewAssetUseCase(
 }
 
 func (uc *AssetUseCase) ExecuteAdd(payload *entity.AddAssetPayload) string {
-	//uc.validation.ValidatePayload(payload)
+	uc.validation.ValidatePayload(payload)
 	uc.handleFileAsset(payload)
 
 	// Finally add it to repository
 	return uc.assetRepository.AddAsset(payload)
 }
 
-func (uc *AssetUseCase) ExecuteGetAll(listCount int, pageList int) []entity.PreviewAsset {
-	return uc.assetRepository.GetPreviewAssets(listCount, pageList)
+func (uc *AssetUseCase) ExecuteGetAll(listCount int, pageList int, userId string) []entity.PreviewAsset {
+	return uc.assetRepository.GetPreviewAssets(listCount, pageList, userId)
 }
 
 func (uc *AssetUseCase) ExecuteGetDetail(id string, userId string) *entity.Asset {
@@ -47,7 +47,7 @@ func (uc *AssetUseCase) ExecuteGetDetail(id string, userId string) *entity.Asset
 }
 
 func (uc *AssetUseCase) ExecuteUpdate(id string, payload *entity.AddAssetPayload) {
-	//uc.validation.ValidatePayload(payload)
+	uc.validation.ValidatePayload(payload)
 	uc.handleFileAsset(payload)
 	oldOriginalAsset, oldWatermarkedAsset := uc.assetRepository.UpdateAsset(id, payload)
 

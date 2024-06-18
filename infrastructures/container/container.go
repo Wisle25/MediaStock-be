@@ -56,3 +56,16 @@ func NewAssetContainer(
 
 	return nil
 }
+
+// Dependency Injection for Favorite Use Case
+func NewFavoriteContainer(
+	idGenerator generator.IdGenerator,
+	db *sql.DB,
+) *use_case.FavoriteUseCase {
+	wire.Build(
+		repository.NewFavoriteRepositoryPG,
+		use_case.NewFavoriteUseCase,
+	)
+
+	return nil
+}

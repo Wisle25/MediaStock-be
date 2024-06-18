@@ -110,3 +110,18 @@ func NewRatingContainer(
 
 	return nil
 }
+
+// Dependency Injection for Comment Use Case
+func NewCommentContainer(
+	idGenerator generator.IdGenerator,
+	db *sql.DB,
+	validator *services.Validation,
+) *use_case.CommentUseCase {
+	wire.Build(
+		validation.NewGoValidateComment,
+		repository.NewCommentRepositoryPG,
+		use_case.NewCommentUseCase,
+	)
+
+	return nil
+}

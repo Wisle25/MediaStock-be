@@ -15,6 +15,7 @@ import (
 	"github.com/wisle25/media-stock-be/infrastructures/services"
 	"github.com/wisle25/media-stock-be/interfaces/http/assets"
 	"github.com/wisle25/media-stock-be/interfaces/http/carts"
+	"github.com/wisle25/media-stock-be/interfaces/http/comments"
 	"github.com/wisle25/media-stock-be/interfaces/http/favorites"
 	"github.com/wisle25/media-stock-be/interfaces/http/middlewares"
 	"github.com/wisle25/media-stock-be/interfaces/http/ratings"
@@ -88,6 +89,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 	cartUseCase := container.NewCartContainer(uuidGenerator, db)
 	transactionUseCase := container.NewTransactionContainer(uuidGenerator, db)
 	ratingUseCase := container.NewRatingContainer(uuidGenerator, db, validation)
+	commentUseCase := container.NewCommentContainer(uuidGenerator, db, validation)
 
 	// Custom Middleware
 	jwtMiddleware := middlewares.NewJwtMiddleware(userUseCase)
@@ -99,6 +101,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 	carts.NewCartRouter(app, jwtMiddleware, cartUseCase)
 	transactions.NewTransactionRouter(app, jwtMiddleware, transactionUseCase)
 	ratings.NewRatingRouter(app, jwtMiddleware, ratingUseCase)
+	comments.NewCommentRouter(app, jwtMiddleware, commentUseCase)
 
 	return app
 }

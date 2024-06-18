@@ -68,3 +68,11 @@ func NewRatingContainer(idGenerator generator.IdGenerator, db *sql.DB, validator
 	ratingUseCase := use_case.NewRatingUseCase(ratingRepository, validateRating)
 	return ratingUseCase
 }
+
+// Dependency Injection for Comment Use Case
+func NewCommentContainer(idGenerator generator.IdGenerator, db *sql.DB, validator *services.Validation) *use_case.CommentUseCase {
+	commentRepository := repository.NewCommentRepositoryPG(db, idGenerator)
+	validateComment := validation.NewGoValidateComment(validator)
+	commentUseCase := use_case.NewCommentUseCase(commentRepository, validateComment)
+	return commentUseCase
+}

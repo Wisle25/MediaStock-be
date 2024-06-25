@@ -12,6 +12,7 @@ import (
 	"github.com/wisle25/media-stock-be/domains/entity"
 	"github.com/wisle25/media-stock-be/domains/repository"
 	"io"
+	"path"
 	"time"
 )
 
@@ -121,7 +122,7 @@ func (uc *UserUseCase) ExecuteLogin(payload *entity.LoginUserPayload) (*entity.T
 	// Add tokens to the cache
 	userInfoJSON, err := json.Marshal(userInfo)
 	if err != nil {
-		panic(fmt.Errorf("login_err: unable to marshal json user info: %v", err))
+		commons.ThrowServerError("login_err: unable to marshal json user info", err)
 	}
 
 	now := time.Now()
@@ -144,7 +145,7 @@ func (uc *UserUseCase) ExecuteRefreshToken(currentRefreshToken string) *entity.T
 	var userInfo entity.User
 	err := json.Unmarshal([]byte(userInfoJSON), &userInfo)
 	if err != nil {
-		panic(fmt.Errorf("refresh_token_err: unable to unmarshal json user info: %v", err))
+		commons.ThrowServerError("refresh_token_err: unable to unmarshal json user info", err)
 	}
 
 	// Re-create access token and re-insert to the cache
@@ -191,6 +192,7 @@ func (uc *UserUseCase) ExecuteUpdateUserById(userId string, payload *entity.Upda
 	}
 
 	newAvatarLink := ""
+
 	// Handling avatar file
 	if payload.Avatar != nil {
 		file, _ := payload.Avatar.Open()
@@ -198,6 +200,10 @@ func (uc *UserUseCase) ExecuteUpdateUserById(userId string, payload *entity.Upda
 
 		compressedBuffer, extension := uc.fileProcessing.CompressImage(fileBuffer, file_statics.WEBP)
 		newAvatarLink = uc.fileUpload.UploadFile(compressedBuffer, extension)
+
+		// Adjust the link to be added with Minio
+		minioUrl := uc.config.MinioUrl + uc.config.MinioBucket + "/"
+		newAvatarLink = minioUrl + newAvatarLink
 	}
 
 	// Updating user's repository
@@ -205,6 +211,6 @@ func (uc *UserUseCase) ExecuteUpdateUserById(userId string, payload *entity.Upda
 
 	// If exists, remove user's old avatar
 	if oldAvatarLink != "" {
-		uc.fileUpload.RemoveFile(oldAvatarLink)
+		uc.fileUpload.RemoveFile(path.Base(oldAvatarLink))
 	}
 }

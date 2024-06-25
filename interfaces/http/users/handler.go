@@ -112,7 +112,7 @@ func (h *UserHandler) RefreshToken(c *fiber.Ctx) error {
 func (h *UserHandler) Logout(c *fiber.Ctx) error {
 	// Payload
 	refreshToken := c.Cookies("refresh_token")
-	accessTokenId := c.Locals("access_token_id").(string)
+	accessTokenId := c.Locals("accessTokenId").(string)
 
 	// Use Case
 	h.useCase.ExecuteLogout(refreshToken, accessTokenId)

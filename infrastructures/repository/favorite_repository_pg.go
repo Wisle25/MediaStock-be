@@ -24,7 +24,7 @@ func NewFavoriteRepositoryPG(idGenerator generator.IdGenerator, db *sql.DB) repo
 
 func (f *FavoriteRepositoryPG) AddAsFavorite(payload *entity.FavoritePayload) {
 	id := f.idGenerator.Generate()
-	fmt.Printf("id: %s, assetId: %s, userId: %s", id, payload.AssetId, payload.UserId)
+
 	// Query
 	query := "INSERT INTO favorites(id, asset_id, user_id) VALUES ($1, $2, $3)"
 	result, err := f.db.Exec(query, id, payload.AssetId, payload.UserId)

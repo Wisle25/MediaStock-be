@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/wisle25/media-stock-be/applications/file_statics"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 )
@@ -57,11 +56,6 @@ func (v *VipsFileProcessing) CompressImage(buffer []byte, to file_statics.Conver
 	}
 
 	return result, extension
-}
-
-func (v *VipsFileProcessing) ResizeImage(fileHeader *multipart.FileHeader) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (v *VipsFileProcessing) AddWatermark(buffer []byte) []byte {

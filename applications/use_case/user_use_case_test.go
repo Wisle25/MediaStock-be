@@ -1,6 +1,9 @@
 package use_case_test
 
 import (
+	"encoding/json"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/wisle25/media-stock-be/applications/file_statics"
 	"github.com/wisle25/media-stock-be/applications/use_case"
 	"github.com/wisle25/media-stock-be/domains/entity"
@@ -10,8 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/wisle25/media-stock-be/commons"
 )
 
@@ -22,25 +23,21 @@ type MockUserRepository struct {
 
 func (m *MockUserRepository) AddUser(payload *entity.RegisterUserPayload) string {
 	args := m.Called(payload)
-
 	return args.String(0)
 }
 
-func (m *MockUserRepository) GetUserForLogin(identity string) (string, string) {
+func (m *MockUserRepository) GetUserForLogin(identity string) (*entity.User, string) {
 	args := m.Called(identity)
-
-	return args.String(0), args.String(1)
+	return args.Get(0).(*entity.User), args.String(1)
 }
 
 func (m *MockUserRepository) GetUserById(id string) *entity.User {
 	args := m.Called(id)
-
 	return args.Get(0).(*entity.User)
 }
 
 func (m *MockUserRepository) UpdateUserById(id string, payload *entity.UpdateUserPayload, avatarLink string) string {
 	args := m.Called(id, payload, avatarLink)
-
 	return args.String(0)
 }
 
@@ -81,8 +78,8 @@ type MockToken struct {
 	mock.Mock
 }
 
-func (m *MockToken) CreateToken(userID string, ttl time.Duration, privateKey string) *entity.TokenDetail {
-	args := m.Called(userID, ttl, privateKey)
+func (m *MockToken) CreateToken(user *entity.User, ttl time.Duration, privateKey string) *entity.TokenDetail {
+	args := m.Called(user, ttl, privateKey)
 	return args.Get(0).(*entity.TokenDetail)
 }
 
@@ -114,12 +111,16 @@ type MockFileUpload struct {
 
 func (m *MockFileUpload) UploadFile(buffer []byte, extension string) string {
 	args := m.Called(buffer, extension)
-
 	return args.String(0)
 }
 
-func (m *MockFileUpload) RemoveFile(oldFileLink string) {
-	m.Called(oldFileLink)
+func (m *MockFileUpload) GetFile(fileName string) []byte {
+	args := m.Called(fileName)
+	return args.Get(0).([]byte)
+}
+
+func (m *MockFileUpload) RemoveFile(fileLink string) {
+	m.Called(fileLink)
 }
 
 type MockFileProcessing struct {
@@ -128,18 +129,11 @@ type MockFileProcessing struct {
 
 func (m *MockFileProcessing) CompressImage(buffer []byte, to file_statics.ConvertTo) ([]byte, string) {
 	args := m.Called(buffer, to)
-
 	return args.Get(0).([]byte), args.String(1)
-}
-
-func (m *MockFileProcessing) ResizeImage(fileHeader *multipart.FileHeader) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (m *MockFileProcessing) AddWatermark(buffer []byte) []byte {
 	args := m.Called(buffer)
-
 	return args.Get(0).([]byte)
 }
 
@@ -165,6 +159,9 @@ func TestUserUseCase(t *testing.T) {
 		RefreshTokenExpiresIn: time.Hour * 24,
 		AccessTokenPrivateKey: "any",
 		RefreshTokenPublicKey: "any",
+		ServerProtocol:        "http",
+		MinioEndpoint:         "minio:9000",
+		MinioBucket:           "media-stock",
 	}
 	mockToken := new(MockToken)
 	mockCache := new(MockCache)
@@ -195,7 +192,7 @@ func TestUserUseCase(t *testing.T) {
 		mockValidator.On("ValidateRegisterPayload", payload).Return(nil)
 		mockPasswordHash.On("Hash", payload.Password).Return("hashedpassword")
 		mockUserRepo.On("AddUser", payload).Return("userid123")
-		mockToken.On("CreateToken", "userid123", mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(&entity.TokenDetail{}).Once()
+		mockToken.On("CreateToken", &entity.User{Id: "userid123"}, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(&entity.TokenDetail{}).Once()
 		mockEmailService.On("SendEmail", mock.AnythingOfType("entity.Email")).Return(nil)
 
 		// Action
@@ -218,11 +215,13 @@ func TestUserUseCase(t *testing.T) {
 		userId := "userid123"
 
 		expectedToken := &entity.TokenDetail{
-			UserId: userId,
+			UserToken: &entity.User{
+				Id: userId,
+			},
 		}
 
 		mockToken.On("ValidateToken", payloadToken, mockConfig.AccessTokenPublicKey).Return(expectedToken)
-		mockUserRepo.On("ActivateAccount", expectedToken.UserId).Return(nil)
+		mockUserRepo.On("ActivateAccount", expectedToken.UserToken.Id).Return(nil)
 
 		// Actions
 		userUseCase.ExecuteActivate(payloadToken)
@@ -248,24 +247,28 @@ func TestUserUseCase(t *testing.T) {
 		accessTokenDetail := &entity.TokenDetail{
 			TokenId:   "access_token_id",
 			ExpiresIn: time.Now().Add(time.Hour).Unix(),
-			UserId:    "userid123",
-			Token:     "access_token",
+			UserToken: &entity.User{
+				Id: "userid123",
+			},
+			Token: "access_token",
 		}
 
 		refreshTokenDetail := &entity.TokenDetail{
 			TokenId:   "refresh_token_id",
 			ExpiresIn: time.Now().Add(time.Hour * 24).Unix(),
-			UserId:    "userid123",
-			Token:     "refresh_token",
+			UserToken: &entity.User{
+				Id: "userid123",
+			},
+			Token: "refresh_token",
 		}
 
 		mockValidator.On("ValidateLoginPayload", payload).Return(nil)
-		mockUserRepo.On("GetUserForLogin", payload.Identity).Return(user.Id, "hashedpassword")
+		mockUserRepo.On("GetUserForLogin", payload.Identity).Return(user, "hashedpassword")
 		mockPasswordHash.On("Compare", payload.Password, "hashedpassword").Return(nil)
-		mockToken.On("CreateToken", user.Id, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(accessTokenDetail).Once()
-		mockToken.On("CreateToken", user.Id, mockConfig.RefreshTokenExpiresIn, mockConfig.RefreshTokenPrivateKey).Return(refreshTokenDetail).Once()
-		mockCache.On("SetCache", accessTokenDetail.TokenId, user.Id, mock.Anything).Return(nil).Once()
-		mockCache.On("SetCache", refreshTokenDetail.TokenId, user.Id, mock.Anything).Return(nil).Once()
+		mockToken.On("CreateToken", user, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(accessTokenDetail).Once()
+		mockToken.On("CreateToken", user, mockConfig.RefreshTokenExpiresIn, mockConfig.RefreshTokenPrivateKey).Return(refreshTokenDetail).Once()
+		mockCache.On("SetCache", accessTokenDetail.TokenId, mock.Anything, mock.Anything).Return(nil).Once()
+		mockCache.On("SetCache", refreshTokenDetail.TokenId, mock.Anything, mock.Anything).Return(nil).Once()
 
 		// Action
 		accessToken, refreshToken := userUseCase.ExecuteLogin(payload)
@@ -288,20 +291,31 @@ func TestUserUseCase(t *testing.T) {
 		accessTokenDetail := &entity.TokenDetail{
 			TokenId:   "access_token_id",
 			ExpiresIn: time.Now().Add(time.Hour).Unix(),
-			UserId:    "userid123",
-			Token:     "access_token",
+			UserToken: &entity.User{
+				Id: "userid123",
+			},
+			Token: "access_token",
 		}
 		refreshTokenDetail := &entity.TokenDetail{
 			TokenId:   "refresh_token_id",
 			ExpiresIn: time.Now().Add(time.Hour * 24).Unix(),
-			UserId:    "userid123",
-			Token:     "refresh_token",
+			UserToken: &entity.User{
+				Id: "userid123",
+			},
+			Token: "refresh_token",
 		}
 
 		mockToken.On("ValidateToken", refreshTokenCookie, mockConfig.RefreshTokenPublicKey).Return(refreshTokenDetail)
-		mockCache.On("GetCache", refreshTokenDetail.TokenId).Return(refreshTokenDetail.UserId)
-		mockToken.On("CreateToken", refreshTokenDetail.UserId, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(accessTokenDetail)
-		mockCache.On("SetCache", accessTokenDetail.TokenId, refreshTokenDetail.UserId, mock.Anything).Return(nil)
+
+		userInfo := &entity.User{
+			Id:       "userid123",
+			Username: "testuser",
+			Email:    "test@example.com",
+		}
+		userInfoJSON, _ := json.Marshal(userInfo)
+		mockCache.On("GetCache", refreshTokenDetail.TokenId).Return(string(userInfoJSON))
+		mockToken.On("CreateToken", userInfo, mockConfig.AccessTokenExpiresIn, mockConfig.AccessTokenPrivateKey).Return(accessTokenDetail)
+		mockCache.On("SetCache", accessTokenDetail.TokenId, string(userInfoJSON), mock.Anything).Return(nil)
 
 		// Action
 		accessTokenResponse := userUseCase.ExecuteRefreshToken(refreshTokenCookie)
@@ -338,11 +352,20 @@ func TestUserUseCase(t *testing.T) {
 		accessToken := "access_token123"
 		accessTokenDetail := &entity.TokenDetail{
 			TokenId: "access_token123",
-			UserId:  "userid123",
+			UserToken: &entity.User{
+				Id: "userid123",
+			},
 		}
 
 		mockToken.On("ValidateToken", accessToken, mockConfig.AccessTokenPublicKey).Return(accessTokenDetail)
-		mockCache.On("GetCache", accessTokenDetail.TokenId).Return(accessTokenDetail.UserId)
+
+		userInfo := &entity.User{
+			Id:       "userid123",
+			Username: "testuser",
+			Email:    "test@example.com",
+		}
+		userInfoJSON, _ := json.Marshal(userInfo)
+		mockCache.On("GetCache", accessTokenDetail.TokenId).Return(string(userInfoJSON))
 
 		// Action
 		userIdCache, tokenDetail := userUseCase.ExecuteGuard(accessToken)
@@ -397,7 +420,8 @@ func TestUserUseCase(t *testing.T) {
 		mockPasswordHash.On("Hash", payload.Password).Return("hashedPassword")
 		mockFileProcessing.On("CompressImage", avatarBuffer, mock.Anything).Return(compressBuffer, ".webp")
 		mockFileUpload.On("UploadFile", compressBuffer, ".webp").Return(avatarLink)
-		mockUserRepo.On("UpdateUserById", userId, payload, avatarLink).Return(oldAvatarLink)
+		minioUrl := mockConfig.MinioUrl + mockConfig.MinioBucket + "/" + avatarLink
+		mockUserRepo.On("UpdateUserById", userId, payload, minioUrl).Return(oldAvatarLink)
 		mockFileUpload.On("RemoveFile", oldAvatarLink).Return(nil)
 
 		// Actions

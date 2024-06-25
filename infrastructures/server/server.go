@@ -84,7 +84,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 		emailService,
 		validation,
 	)
-	assetUseCase := container.NewAssetContainer(uuidGenerator, db, vipsFileProcessing, minioFileUpload, validation)
+	assetUseCase := container.NewAssetContainer(uuidGenerator, db, vipsFileProcessing, minioFileUpload, validation, config)
 	favoriteUseCase := container.NewFavoriteContainer(uuidGenerator, db)
 	cartUseCase := container.NewCartContainer(uuidGenerator, db)
 	transactionUseCase := container.NewTransactionContainer(uuidGenerator, db)

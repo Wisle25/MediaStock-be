@@ -16,19 +16,20 @@ type LoginUserPayload struct {
 	Password string `json:"password"` // User's password
 }
 
+// UpdateUserPayload represents the payload for updating user information.
 type UpdateUserPayload struct {
-	Username        string `json:"username"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirmPassword"`
-	Avatar          *multipart.FileHeader
+	Username        string                `json:"username"`        // New username for the user
+	Email           string                `json:"email"`           // New email address for the user
+	Password        string                `json:"password"`        // New password for the user
+	ConfirmPassword string                `json:"confirmPassword"` // Confirmation of the new password
+	Avatar          *multipart.FileHeader // New avatar image for the user
 }
 
 // User represents a user in the system.
 type User struct {
-	Id         string `json:"id"`         // Id for the user
-	Username   string `json:"username"`   // Username of the user, Username should be unique
-	Email      string `json:"email"`      // Email address of the user, Email should be unique
-	AvatarLink string `json:"avatarLink"` // AvatarLink to the user's avatar image
-	IsVerified bool   `json:"isVerified"` // IsVerified check is the user has activated his account
+	Id         string `json:"id"`         // ID of the user
+	Username   string `json:"username"`   // Username of the user, should be unique
+	Email      string `json:"email"`      // Email address of the user, should be unique
+	AvatarLink string `json:"avatarLink"` // Link to the user's avatar image
+	IsVerified bool   `json:"isVerified"` // Indicates whether the user's email is verified
 }

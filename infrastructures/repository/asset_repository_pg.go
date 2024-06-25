@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/wisle25/media-stock-be/applications/generator"
+	"github.com/wisle25/media-stock-be/commons"
 	"github.com/wisle25/media-stock-be/domains/entity"
 	"github.com/wisle25/media-stock-be/domains/repository"
 	"github.com/wisle25/media-stock-be/infrastructures/services"
@@ -23,7 +24,7 @@ func NewAssetRepositoryPG(idGenerator generator.IdGenerator, db *sql.DB) reposit
 	}
 }
 
-func (r *AssetRepositoryPG) AddAsset(payload *entity.AddAssetPayload) string {
+func (r *AssetRepositoryPG) AddAsset(payload *entity.AssetPayload) string {
 	// Create ID
 	id := r.idGenerator.Generate()
 
@@ -54,34 +55,52 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AddAssetPayload) string {
 	return returnedId
 }
 
-func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId string) []entity.PreviewAsset {
+func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId string, sortBy string, search string) []entity.PreviewAsset {
 	// Pagination
 	offset := (pageList - 1) * listCount
 
-	// Query
-	query := `
-			SELECT 
-				a.id, 
-				u.username AS owner_username, 
-				a.title, 
-				a.file_watermark_path, 
-				a.description,
-				COALESCE(AVG(r.score), 0) AS rating,
-				COUNT(f.id) AS favorite_count,
-				CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite
-			FROM assets a
-			INNER JOIN users u ON a.owner_id = u.id
-			LEFT JOIN favorites f ON a.id = f.asset_id
-			LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $3
-			LEFT JOIN ratings r ON a.id = r.asset_id
-			GROUP BY a.id, u.username, a.title, a.file_watermark_path, a.description, a.created_at, uf.asset_id
-			ORDER BY a.created_at DESC
-			LIMIT $1 OFFSET $2`
-	rows, err := r.db.Query(query, listCount, offset, userId)
+	// Determine sorting column and order
+	var sortColumn string
+	switch sortBy {
+	case "Recommended":
+		sortColumn = "rating DESC, a.created_at DESC"
+	case "Newest":
+		sortColumn = "a.created_at DESC"
+	case "Oldest":
+		sortColumn = "a.created_at ASC"
+	case "PriceLow":
+		sortColumn = "a.price ASC"
+	case "PriceHigh":
+		sortColumn = "a.price DESC"
+	default:
+		sortColumn = "a.created_at DESC"
+	}
 
+	// Query
+	query := fmt.Sprintf(`
+		SELECT 
+			a.id, 
+			u.username AS owner_username, 
+			a.title, 
+			a.file_watermark_path, 
+			a.description,
+			COALESCE(AVG(r.score), 0) AS rating,
+			COUNT(f.id) AS favorite_count,
+			CASE WHEN uf.asset_id IS NOT NULL THEN true ELSE false END AS is_favorite
+		FROM assets a
+		INNER JOIN users u ON a.owner_id = u.id
+		LEFT JOIN favorites f ON a.id = f.asset_id
+		LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $3
+		LEFT JOIN ratings r ON a.id = r.asset_id
+		WHERE ($4 = '' OR a.title ILIKE '%%' || $4 || '%%' OR a.description ILIKE '%%' || $4 || '%%')
+		GROUP BY a.id, u.username, a.title, a.file_watermark_path, a.description, a.created_at, uf.asset_id
+		ORDER BY %s
+		LIMIT $1 OFFSET $2`, sortColumn)
+
+	rows, err := r.db.Query(query, listCount, offset, userId, search)
 	// Evaluate
 	if err != nil {
-		panic(fmt.Errorf("get_preview_assets_err: %v", err))
+		commons.ThrowServerError("get_preview_assets_err:", err)
 	}
 
 	return services.GetTableDB[entity.PreviewAsset](rows)
@@ -160,12 +179,55 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 	} else {
 		result.FilePath = watermarkPath
 	}
-	fmt.Printf("user: %s; asset: %s", userId, result.FilePath)
 
 	return &result
 }
 
-func (r *AssetRepositoryPG) UpdateAsset(id string, payload *entity.AddAssetPayload) (string, string) {
+func (r *AssetRepositoryPG) GetPurchasedAsset(userId string) []entity.SimpleAsset {
+	// Query
+	query := `
+			SELECT
+    			a.id,
+				a.title,
+				a.price,
+			    a.file_watermark_path AS file_path
+			FROM
+				assets a
+			INNER JOIN transaction_items ON a.id = transaction_items.asset_id
+			INNER JOIN transactions ON transaction_items.transaction_id = transactions.id
+			WHERE transactions.user_id = $1`
+	rows, err := r.db.Query(query, userId)
+
+	// Evaluate
+	if err != nil {
+		panic(fmt.Errorf("get_purchased_asset_err: %v", err))
+	}
+
+	return services.GetTableDB[entity.SimpleAsset](rows)
+}
+
+func (r *AssetRepositoryPG) GetOwnedAsset(userId string) []entity.SimpleAsset {
+	// Query
+	query := `
+			SELECT
+    			id,
+				title,
+				price,
+			    file_watermark_path AS file_path
+			FROM
+				assets
+			WHERE assets.owner_id = $1`
+	rows, err := r.db.Query(query, userId)
+
+	// Evaluate
+	if err != nil {
+		panic(fmt.Errorf("get_owned_asset_err: %v", err))
+	}
+
+	return services.GetTableDB[entity.SimpleAsset](rows)
+}
+
+func (r *AssetRepositoryPG) UpdateAsset(id string, payload *entity.AssetPayload) (string, string) {
 	var oldOriginalLink string
 	var oldWatermarkLink string
 

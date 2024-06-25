@@ -1,8 +1,8 @@
 ﻿package entity
 
-// Email Entity to send email
+// Email represents the data required to send an email.
 type Email struct {
-	To      string
-	Subject string
-	Body    string
+	To      string // Recipient email address
+	Subject string // Subject of the email
+	Body    string // Body of the email
 }

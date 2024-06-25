@@ -5,12 +5,15 @@ import (
 	"time"
 )
 
-type AddAssetPayload struct {
-	Title         string `json:"title"`
-	File          *multipart.FileHeader
-	Description   string `json:"description"`
-	Details       string `json:"details"`
-	Price         string `json:"price"`
+type AssetPayload struct {
+	// From User
+	Title       string `json:"title"`
+	File        *multipart.FileHeader
+	Description string `json:"description"`
+	Details     string `json:"details"`
+	Price       string `json:"price"`
+
+	// From Server
 	OwnerId       string
 	OriginalLink  string
 	WatermarkLink string
@@ -18,29 +21,37 @@ type AddAssetPayload struct {
 
 type PreviewAsset struct {
 	Id            string  `json:"id"`
-	OwnerUsername string  `json:"owner_username"`
+	OwnerUsername string  `json:"ownerUsername"`
 	Title         string  `json:"title"`
-	FilePath      string  `json:"file_watermark_path"`
+	FilePath      string  `json:"filePath"`
 	Description   string  `json:"description"`
 	Rating        float32 `json:"rating"`
-	FavoriteCount int     `json:"favorite_count"`
-	IsFavorite    bool    `json:"is_favorite"`
+	FavoriteCount int     `json:"favoriteCount"`
+	IsFavorite    bool    `json:"isFavorite"`
 }
 
 type Asset struct {
 	Id             string    `json:"id"`
-	OwnerId        string    `json:"owner_id"`
-	OwnerUsername  string    `json:"owner_username"`
+	OwnerId        string    `json:"ownerId"`
+	OwnerUsername  string    `json:"ownerUsername"`
 	Title          string    `json:"title"`
-	FilePath       string    `json:"file_watermark_path"`
+	FilePath       string    `json:"filePath"`
 	Description    string    `json:"description"`
 	Details        string    `json:"details"`
 	Rating         float32   `json:"rating"`
 	Price          string    `json:"price"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	FavoriteCount  int       `json:"favorite_count"`
-	PurchasedCount int       `json:"purchased_count"`
-	IsFavorite     bool      `json:"is_favorite"`
-	IsPurchased    bool      `json:"is_purchased"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	FavoriteCount  int       `json:"favoriteCount"`
+	PurchasedCount int       `json:"purchasedCount"`
+	IsFavorite     bool      `json:"isFavorite"`
+	IsPurchased    bool      `json:"isPurchased"`
+}
+
+// SimpleAsset only provides some information
+type SimpleAsset struct {
+	Id       string `json:"id"`       // Unique identifier for the favorite item
+	Title    string `json:"title"`    // Title of the favorited asset
+	Price    string `json:"price"`    // Price of the favorited asset
+	FilePath string `json:"filePath"` // Path to the favorited asset file
 }

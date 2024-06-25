@@ -23,7 +23,7 @@ func (h *AssetHandler) AddAsset(c *fiber.Ctx) error {
 	var err error
 
 	// Payload
-	var payload entity.AddAssetPayload
+	var payload entity.AssetPayload
 	_ = c.BodyParser(&payload)
 
 	payload.OwnerId = c.Locals("userInfo").(entity.User).Id
@@ -57,8 +57,11 @@ func (h *AssetHandler) GetAll(c *fiber.Ctx) error {
 	defaultId, _ := uuid.NewV7() // This is to prevent invalid UUID by SQL
 	userId := c.Query("userId", defaultId.String())
 
+	sortBy := c.Query("sortBy", "")
+	search := c.Query("search", "")
+
 	// Use Case
-	assets := h.ExecuteGetAll(listCount, pageList, userId)
+	assets := h.ExecuteGetAll(listCount, pageList, userId, sortBy, search)
 
 	// Response
 	return c.Status(200).JSON(fiber.Map{
@@ -83,13 +86,41 @@ func (h *AssetHandler) GetDetail(c *fiber.Ctx) error {
 	})
 }
 
+func (h *AssetHandler) GetPurchasedAsset(c *fiber.Ctx) error {
+	// Payload
+	userId := c.Locals("userInfo").(entity.User).Id
+
+	// Use Case
+	assets := h.AssetUseCase.ExecuteGetPurchased(userId)
+
+	// Response
+	return c.Status(200).JSON(fiber.Map{
+		"status": "success",
+		"data":   assets,
+	})
+}
+
+func (h *AssetHandler) GetOwnedAsset(c *fiber.Ctx) error {
+	// Payload
+	userId := c.Locals("userInfo").(entity.User).Id
+
+	// Use Case
+	assets := h.AssetUseCase.ExecuteGetOwned(userId)
+
+	// Response
+	return c.Status(200).JSON(fiber.Map{
+		"status": "success",
+		"data":   assets,
+	})
+}
+
 func (h *AssetHandler) Update(c *fiber.Ctx) error {
 	var err error
 
 	// Payload
 	id := c.Params("id")
 	userId := c.Locals("userInfo").(entity.User).Id
-	var payload entity.AddAssetPayload
+	var payload entity.AssetPayload
 	_ = c.BodyParser(&payload)
 
 	payload.File, err = c.FormFile("asset")

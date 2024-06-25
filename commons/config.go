@@ -41,6 +41,7 @@ type Config struct {
 	RefreshTokenMaxAge     int           `mapstructure:"REFRESH_TOKEN_MAXAGE"`
 
 	// Minio
+	MinioUrl       string `mapstructure:"MINIO_URL"`
 	MinioEndpoint  string `mapstructure:"MINIO_ENDPOINT"`
 	MinioAccessKey string `mapstructure:"MINIO_ACCESS_KEY"`
 	MinioSecretKey string `mapstructure:"MINIO_SECRET_KEY"`

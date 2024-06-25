@@ -47,6 +47,7 @@ func NewAssetContainer(
 	fileProcessing file_statics.FileProcessing,
 	fileUpload file_statics.FileUpload,
 	validator *services.Validation,
+	config *commons.Config,
 ) *use_case.AssetUseCase {
 	wire.Build(
 		validation.NewGoValidateAsset,

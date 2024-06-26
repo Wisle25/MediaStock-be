@@ -19,12 +19,10 @@ RUN go mod download
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 COPY .env .
+COPY scripts/run.sh .
 
 # Install the migrate tool
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-
-# Copy entrypoint script
-COPY scripts/run.sh .
 
 # Build the Go app
 RUN go build -ldflags "-s -w" -o main .

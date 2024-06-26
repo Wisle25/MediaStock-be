@@ -13,13 +13,13 @@ import (
 // Returning the client itself and the bucket name
 func NewMinio(config *commons.Config) (*minio.Client, string) {
 	ctx := context.Background()
-	useSSL := config.AppEnv == "prod"
+	//useSSL := config.AppEnv == "prod"
 	var err error
 
 	// Init
 	minioClient, err := minio.New(config.MinioEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(config.MinioAccessKey, config.MinioSecretKey, ""),
-		Secure: useSSL,
+		Secure: false,
 	})
 	if err != nil {
 		panic(fmt.Errorf("new minio client: init: %w", err))

@@ -3,6 +3,7 @@
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/wisle25/media-stock-be/applications/use_case"
+	"github.com/wisle25/media-stock-be/commons"
 	"github.com/wisle25/media-stock-be/interfaces/http/middlewares"
 )
 
@@ -10,8 +11,9 @@ func NewUserRouter(
 	app *fiber.App,
 	jwtMiddleware *middlewares.JwtMiddleware,
 	useCase *use_case.UserUseCase,
+	config *commons.Config,
 ) {
-	userHandler := NewUserHandler(useCase)
+	userHandler := NewUserHandler(useCase, config)
 
 	app.Post("/users", userHandler.AddUser)
 	app.Post("/auths", userHandler.Login)

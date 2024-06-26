@@ -60,8 +60,8 @@ func CreateServer(config *commons.Config) *fiber.App {
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000",
-		AllowHeaders:     "Origin, Content-Type, Accept",
-		AllowMethods:     "POST,PUT,GET,DELETE",
+		AllowHeaders:     "Origin,Content-Type,Accept",
+		AllowMethods:     "POST,PUT,GET,DELETE,OPTIONS,PATCH",
 		AllowCredentials: true,
 	}))
 
@@ -95,7 +95,7 @@ func CreateServer(config *commons.Config) *fiber.App {
 	jwtMiddleware := middlewares.NewJwtMiddleware(userUseCase)
 
 	// Router
-	users.NewUserRouter(app, jwtMiddleware, userUseCase)
+	users.NewUserRouter(app, jwtMiddleware, userUseCase, config)
 	assets.NewAssetRouter(app, jwtMiddleware, assetUseCase)
 	favorites.NewFavoriteRouter(app, jwtMiddleware, favoriteUseCase)
 	carts.NewCartRouter(app, jwtMiddleware, cartUseCase)

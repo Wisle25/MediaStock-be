@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/wisle25/media-stock-be/applications/use_case"
+	"github.com/wisle25/media-stock-be/commons"
 	"github.com/wisle25/media-stock-be/domains/entity"
 	"strings"
 	"time"
@@ -11,11 +12,13 @@ import (
 
 type UserHandler struct {
 	useCase *use_case.UserUseCase
+	config  *commons.Config
 }
 
-func NewUserHandler(useCase *use_case.UserUseCase) *UserHandler {
+func NewUserHandler(useCase *use_case.UserUseCase, config *commons.Config) *UserHandler {
 	return &UserHandler{
 		useCase: useCase,
+		config:  config,
 	}
 }
 
@@ -65,7 +68,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		MaxAge:   accessTokenDetail.MaxAge,
 		Secure:   true,
 		HTTPOnly: true,
-		Domain:   "localhost",
+		Domain:   h.config.ClientDomain,
 	})
 
 	c.Cookie(&fiber.Cookie{
@@ -75,7 +78,7 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		MaxAge:   refreshTokenDetail.MaxAge,
 		Secure:   true,
 		HTTPOnly: true,
-		Domain:   "localhost",
+		Domain:   h.config.ClientDomain,
 	})
 
 	// Response
@@ -100,7 +103,7 @@ func (h *UserHandler) RefreshToken(c *fiber.Ctx) error {
 		MaxAge:   accessTokenDetail.MaxAge,
 		Secure:   true,
 		HTTPOnly: true,
-		Domain:   "localhost",
+		Domain:   h.config.ClientDomain,
 	})
 
 	// Response

@@ -25,9 +25,10 @@ type Config struct {
 	// Server configuration
 	AppEnv         string `mapstructure:"APP_ENV"`
 	ServerProtocol string `mapstructure:"PROTOCOL"`
-	ServerHost     string `mapstructure:"HOSt"`
+	ServerHost     string `mapstructure:"HOST"`
 	ServerPort     string `mapstructure:"PORT"`
 	ClientOrigin   string `mapstructure:"CLIENT_ORIGIN"`
+	ClientDomain   string `mapstructure:"CLIENT_DOMAIN"`
 
 	// JWT Tokens configuration
 	AccessTokenPrivateKey string        `mapstructure:"ACCESS_TOKEN_PRIVATE_KEY"`
@@ -60,7 +61,6 @@ type Config struct {
 // Returns the loaded config and an error if any.
 func LoadConfig(path string) *Config {
 	viper.AutomaticEnv()
-
 	var err error
 
 	viper.AddConfigPath(path)

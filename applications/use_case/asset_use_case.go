@@ -90,8 +90,8 @@ func (uc *AssetUseCase) ExecuteDelete(id string) {
 	originalAsset, watermarkedAsset := uc.assetRepository.DeleteAsset(id)
 
 	// Remove the file assets from storage
-	uc.fileUpload.RemoveFile(originalAsset)
-	uc.fileUpload.RemoveFile(watermarkedAsset)
+	uc.fileUpload.RemoveFile(path.Base(originalAsset))
+	uc.fileUpload.RemoveFile(path.Base(watermarkedAsset))
 }
 
 // VerifyAccess verifies if the user has access to the asset.
@@ -103,7 +103,7 @@ func (uc *AssetUseCase) VerifyAccess(userId string, id string) {
 // ExecuteDownload returns the asset link and the file buffer to be downloaded.
 func (uc *AssetUseCase) ExecuteDownload(id string, userId string) (string, []byte) {
 	title, fileLink := uc.assetRepository.DownloadAsset(id, userId)
-	fileBuffer := uc.fileUpload.GetFile(fileLink)
+	fileBuffer := uc.fileUpload.GetFile(path.Base(fileLink))
 
 	return title + filepath.Ext(fileLink), fileBuffer
 }

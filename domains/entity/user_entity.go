@@ -32,4 +32,5 @@ type User struct {
 	Email      string `json:"email"`      // Email address of the user, should be unique
 	AvatarLink string `json:"avatarLink"` // Link to the user's avatar image
 	IsVerified bool   `json:"isVerified"` // Indicates whether the user's email is verified
+	Role       string `json:"role"`
 }

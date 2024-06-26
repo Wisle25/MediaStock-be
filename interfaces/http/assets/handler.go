@@ -59,9 +59,10 @@ func (h *AssetHandler) GetAll(c *fiber.Ctx) error {
 
 	sortBy := c.Query("sortBy", "")
 	search := c.Query("search", "")
+	category := c.Query("category", "")
 
 	// Use Case
-	assets := h.ExecuteGetAll(listCount, pageList, userId, sortBy, search)
+	assets := h.ExecuteGetAll(listCount, pageList, userId, sortBy, search, category)
 
 	// Response
 	return c.Status(200).JSON(fiber.Map{

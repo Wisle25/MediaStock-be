@@ -56,6 +56,7 @@ func (jt *JwtToken) CreateToken(userToken *entity.User, ttl time.Duration, priva
 		"email":       userToken.Email,
 		"avatar_link": userToken.AvatarLink,
 		"is_verified": userToken.IsVerified,
+		"role":        userToken.Role,
 		"token_id":    td.TokenId,
 		"exp":         td.ExpiresIn,
 		"iat":         now.Unix(),
@@ -119,6 +120,7 @@ func (jt *JwtToken) ValidateToken(token string, publicKey string) *entity.TokenD
 		Email:      claims["email"].(string),
 		AvatarLink: claims["avatar_link"].(string),
 		IsVerified: claims["is_verified"].(bool),
+		Role:       claims["role"].(string),
 	}
 
 	return &entity.TokenDetail{

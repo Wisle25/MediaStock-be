@@ -52,8 +52,8 @@ func (uc *AssetUseCase) ExecuteAdd(payload *entity.AssetPayload) string {
 }
 
 // ExecuteGetAll retrieves a list of preview assets for the given user.
-func (uc *AssetUseCase) ExecuteGetAll(listCount int, pageList int, userId string, sortBy string, search string) []entity.PreviewAsset {
-	return uc.assetRepository.GetPreviewAssets(listCount, pageList, userId, sortBy, search)
+func (uc *AssetUseCase) ExecuteGetAll(listCount int, pageList int, userId string, sortBy string, search string, category string) []entity.PreviewAsset {
+	return uc.assetRepository.GetPreviewAssets(listCount, pageList, userId, sortBy, search, category)
 }
 
 // ExecuteGetPurchased Get the purchased item by the user

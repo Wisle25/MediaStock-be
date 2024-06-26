@@ -21,6 +21,7 @@ func (g *GoValidateAsset) ValidatePayload(payload *entity.AssetPayload) {
 		"Title":       "required,min=5,max=100",
 		"Price":       "required",
 		"Description": "required,max=255",
+		"Category":    "required,oneof='Panorama' 'City and Architecture' 'Peoples and Portraits' 'Foods and Drink' 'Animals' 'Object'",
 		"Details":     "max=500",
 	}
 

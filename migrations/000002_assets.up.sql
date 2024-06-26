@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS assets(
     file_path TEXT NOT NULL,
     file_watermark_path TEXT NOT NULL,
     description VARCHAR(255) NOT NULL,
+    category VARCHAR(50) NOT NULL CHECK (category IN ('Panorama', 'City and Architecture', 'Peoples and Portraits', 'Foods and Drink', 'Animals', 'Object')),
     price BIGINT NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT now() NOT NULL,

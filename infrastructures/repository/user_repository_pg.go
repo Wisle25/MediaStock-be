@@ -66,7 +66,8 @@ func (r *UserRepositoryPG) GetUserForLogin(identity string) (*entity.User, strin
 		    username,
 		    email,
 		    avatar_link,
-		    is_verified, 
+		    is_verified,
+		    role,
 		    password 
 		FROM users 
 		WHERE email = $1 OR username = $1`
@@ -76,6 +77,7 @@ func (r *UserRepositoryPG) GetUserForLogin(identity string) (*entity.User, strin
 		&userToken.Email,
 		&userToken.AvatarLink,
 		&userToken.IsVerified,
+		&userToken.Role,
 		&encryptedPassword,
 	)
 

@@ -11,6 +11,7 @@ type AssetPayload struct {
 	File        *multipart.FileHeader
 	Description string `json:"description"`
 	Details     string `json:"details"`
+	Category    string `json:"category"`
 	Price       string `json:"price"`
 
 	// From Server
@@ -24,6 +25,7 @@ type PreviewAsset struct {
 	OwnerUsername string  `json:"ownerUsername"`
 	Title         string  `json:"title"`
 	FilePath      string  `json:"filePath"`
+	Category      string  `json:"category"`
 	Description   string  `json:"description"`
 	Rating        float32 `json:"rating"`
 	FavoriteCount int     `json:"favoriteCount"`
@@ -36,6 +38,7 @@ type Asset struct {
 	OwnerUsername  string    `json:"ownerUsername"`
 	Title          string    `json:"title"`
 	FilePath       string    `json:"filePath"`
+	Category       string    `json:"category"`
 	Description    string    `json:"description"`
 	Details        string    `json:"details"`
 	Rating         float32   `json:"rating"`

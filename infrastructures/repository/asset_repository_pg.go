@@ -30,9 +30,9 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AssetPayload) string {
 
 	// Query
 	query := `INSERT INTO 
-    			assets(id, title, file_path, file_watermark_path, description, details, price, owner_id) 
+    			assets(id, title, file_path, file_watermark_path, category, description, details, price, owner_id) 
 			  VALUES
-			      ($1, $2, $3, $4, $5, $6, $7, $8)
+			      ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			  RETURNING id`
 	var returnedId string
 	err := r.db.QueryRow(
@@ -41,6 +41,7 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AssetPayload) string {
 		payload.Title,
 		payload.OriginalLink,
 		payload.WatermarkLink,
+		payload.Category,
 		payload.Description,
 		payload.Details,
 		payload.Price,
@@ -55,7 +56,7 @@ func (r *AssetRepositoryPG) AddAsset(payload *entity.AssetPayload) string {
 	return returnedId
 }
 
-func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId string, sortBy string, search string) []entity.PreviewAsset {
+func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId string, sortBy string, search string, category string) []entity.PreviewAsset {
 	// Pagination
 	offset := (pageList - 1) * listCount
 
@@ -82,7 +83,8 @@ func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId
 			a.id, 
 			u.username AS owner_username, 
 			a.title, 
-			a.file_watermark_path, 
+			a.file_watermark_path,
+			a.category,
 			a.description,
 			COALESCE(AVG(r.score), 0) AS rating,
 			COUNT(f.id) AS favorite_count,
@@ -93,11 +95,12 @@ func (r *AssetRepositoryPG) GetPreviewAssets(listCount int, pageList int, userId
 		LEFT JOIN favorites uf ON a.id = uf.asset_id AND uf.user_id = $3
 		LEFT JOIN ratings r ON a.id = r.asset_id
 		WHERE ($4 = '' OR a.title ILIKE '%%' || $4 || '%%' OR a.description ILIKE '%%' || $4 || '%%')
+		AND ($5 = '' OR a.category = $5)
 		GROUP BY a.id, u.username, a.title, a.file_watermark_path, a.description, a.created_at, uf.asset_id
 		ORDER BY %s
 		LIMIT $1 OFFSET $2`, sortColumn)
 
-	rows, err := r.db.Query(query, listCount, offset, userId, search)
+	rows, err := r.db.Query(query, listCount, offset, userId, search, category)
 	// Evaluate
 	if err != nil {
 		commons.ThrowServerError("get_preview_assets_err:", err)
@@ -121,6 +124,7 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 				a.title, 
 				a.file_path,
 				a.file_watermark_path,
+				a.category,
 				a.description,
 				a.details, 
 				a.price,
@@ -152,6 +156,7 @@ func (r *AssetRepositoryPG) GetDetailAsset(id string, userId string) *entity.Ass
 		&result.Title,
 		&originalPath,
 		&watermarkPath,
+		&result.Category,
 		&result.Description,
 		&result.Details,
 		&result.Price,
